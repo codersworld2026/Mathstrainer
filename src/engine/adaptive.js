@@ -8,9 +8,9 @@ import { simplify, clean, isPrime, simplifyRatio } from './math.js';
 
 export const ROUND_SIZE = 6;
 const RECENT_WINDOW = 5;
-const MAX_LEVEL = 4; // Bronze=1, Silver=2, Gold=3, Challenge=4
-export const TIERS = ['Bronze', 'Silver', 'Gold', 'Challenge'];
-export const tierName = (lvl) => TIERS[Math.max(0, Math.min(3, lvl - 1))];
+const MAX_LEVEL = 5; // Bronze=1, Silver=2, Gold=3, Challenge=4, Challenge+=5
+export const TIERS = ['Bronze', 'Silver', 'Gold', 'Challenge', 'Challenge+'];
+export const tierName = (lvl) => TIERS[Math.max(0, Math.min(TIERS.length - 1, lvl - 1))];
 
 export function freshSkill() {
   return { level: 1, attempts: 0, correct: 0, recent: [], lastSeenRound: -99, mastery: 0 };

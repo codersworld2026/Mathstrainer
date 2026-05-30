@@ -1,6 +1,8 @@
 // Auto-generating question bank aligned to the Year 7 AP3 Revision Pack.
-// Each generator is (level: 1|2|3|4) => Question, where levels map to the
-// pack's tiers:  1 Bronze · 2 Silver · 3 Gold · 4 Challenge.
+// Each generator is (level: 1..5) => Question, where levels map to the
+// pack's tiers plus a stretch tier:
+//   1 Bronze · 2 Silver · 3 Gold · 4 Challenge · 5 Challenge+
+// Challenge+ reuses each objective's hardest path with larger / nastier numbers.
 //
 // Question shape:
 //   { skillId, level, prompt, answerType, answer, steps[], hint, options? }
@@ -31,9 +33,9 @@ const shuffleChoice = (correct, distractors) => {
 
 // LO1 — Fraction of an amount
 function lo1(level) {
-  const d = randInt(3, level >= 2 ? 12 : 8);
+  const d = randInt(3, level >= 5 ? 16 : level >= 2 ? 12 : 8);
   const num = level === 1 ? 1 : randInt(2, d - 1);
-  const part = randInt(2, level >= 3 ? 30 : 12);
+  const part = randInt(2, level >= 5 ? 60 : level >= 3 ? 30 : 12);
   const whole = d * part;
   const answer = num * part;
   const contexts = [
@@ -49,8 +51,8 @@ function lo1(level) {
 // LO2 — Improper fractions & mixed numbers
 function lo2(level) {
   const toImproper = level === 3;
-  const d = randInt(2, level >= 2 ? 9 : 5);
-  const w = randInt(2, level >= 4 ? 5 : 3);
+  const d = randInt(2, level >= 5 ? 12 : level >= 2 ? 9 : 5);
+  const w = randInt(2, level >= 5 ? 9 : level >= 4 ? 5 : 3);
   let n = randInt(1, d - 1);
   while (gcd(n, d) !== 1) n = randInt(1, d - 1); // proper part in lowest terms, like the pack
   if (toImproper) {
@@ -73,7 +75,8 @@ function lo3(level) {
   if (level === 1) { a = randInt(2, 6); m = randInt(2, 5); }
   else if (level === 2) { a = randInt(3, 9); m = clean(randInt(4, 9) / 3); }
   else if (level === 3) { a = clean(randInt(3, 9) + 0.5); m = randInt(2, 5); }
-  else { a = randInt(3, 8); m = clean(randInt(20, 45) / 10); }
+  else if (level === 4) { a = randInt(3, 8); m = clean(randInt(20, 45) / 10); }
+  else { a = randInt(4, 14); m = clean(randInt(25, 75) / 10); }
   const b = clean(a * m);
   const x = randInt(Math.ceil(a) + 1, Math.ceil(a) + 10);
   const answer = clean(x * m);
@@ -110,7 +113,7 @@ function lo4(level) {
       steps: [`Add the known sides: ${s.join(' + ')} = ${P - x}.`, `Subtract from perimeter: ${P} − ${P - x} = ${x} cm.`],
       hint: 'Add the four you know, subtract from the total.' };
   }
-  const equal = randInt(15, 35), base = randInt(15, 35);
+  const equal = randInt(15, level >= 5 ? 60 : 35), base = randInt(15, level >= 5 ? 60 : 35);
   const P = 2 * equal + base;
   return { skillId: 'lo4', level, prompt: `An isosceles triangle has perimeter ${P} cm. Its base is ${base} cm. Find each equal side.`,
     answerType: 'integer', answer: equal,
@@ -132,7 +135,7 @@ function lo5(level) {
       hint: 'Turn both into decimals to compare.' };
   }
   const fs = [];
-  while (fs.length < (level === 3 ? 2 : 3)) {
+  while (fs.length < (level === 3 ? 2 : level >= 5 ? 4 : 3)) {
     const f = properFrac(12);
     if (!fs.some((g) => g.n / g.d === f.n / f.d)) fs.push(f);
   }
@@ -152,7 +155,7 @@ function lo5(level) {
 
 // LO6 — Prime factorisation
 function lo6(level) {
-  const ranges = { 1: [12, 50], 2: [50, 99], 3: [100, 199], 4: [200, 399] };
+  const ranges = { 1: [12, 50], 2: [50, 99], 3: [100, 199], 4: [200, 399], 5: [400, 899] };
   const [lo, hi] = ranges[level];
   let N = randInt(lo, hi);
   while (Object.values(primeFactors(N)).reduce((a, b) => a + b, 0) < 2) N = randInt(lo, hi);
@@ -165,7 +168,7 @@ function lo6(level) {
 // LO7 — HCF and LCM from prime factors
 function lo7(level) {
   const wantLCM = level === 1 || level === 3;
-  const a = randInt(12, 40), b = randInt(12, 40);
+  const a = randInt(12, level >= 5 ? 80 : 40), b = randInt(12, level >= 5 ? 80 : 40);
   const ans = wantLCM ? lcm(a, b) : gcd(a, b);
   return { skillId: 'lo7', level,
     prompt: `${a} = ${primeFacStr(a)} and ${b} = ${primeFacStr(b)}. Find the ${wantLCM ? 'LCM' : 'HCF'} of ${a} and ${b}.`,
@@ -178,7 +181,7 @@ function lo7(level) {
 
 // LO8 — Add & subtract fractions, same denominator
 function lo8(level) {
-  const d = randInt(5, 12);
+  const d = randInt(5, level >= 5 ? 16 : 12);
   if (level <= 2) {
     const op = level === 2 ? '-' : choice(['+', '-']);
     let a = randInt(1, d - 1), b = randInt(1, d - 1);
@@ -210,9 +213,9 @@ function lo9(level) {
       steps: [`Check the HCF of ${a} and ${b}: it is ${gcd(a, b)}.`, gcd(a, b) === 1 ? `HCF is 1 → already simplest.` : `HCF is ${gcd(a, b)} → yes it simplifies.`],
       hint: 'Share a factor above 1? Then it simplifies.' };
   }
-  const parts = level === 3 ? 3 : 2;
+  const parts = level === 3 ? 3 : level >= 5 ? 4 : 2;
   const base = Array.from({ length: parts }, () => randInt(1, 6));
-  const k = randInt(2, level === 4 ? 18 : 6);
+  const k = randInt(2, level >= 4 ? 18 : 6);
   const given = base.map((x) => x * k);
   const ans = simplifyRatio(given);
   const g = given.reduce((a, b) => gcd(a, b));
@@ -223,10 +226,10 @@ function lo9(level) {
 
 // LO10 — Simplify fractions
 function lo10(level) {
-  const q = randInt(2, level >= 3 ? 9 : 6);
+  const q = randInt(2, level >= 5 ? 12 : level >= 3 ? 9 : 6);
   let p = randInt(1, q - 1);
   while (gcd(p, q) !== 1) p = randInt(1, q - 1);
-  const k = randInt(2, level === 1 ? 4 : level === 2 ? 6 : 9);
+  const k = randInt(2, level >= 5 ? 12 : level === 1 ? 4 : level === 2 ? 6 : 9);
   const n = p * k, d = q * k;
   return { skillId: 'lo10', level, prompt: `Simplify ${n}/${d}`, answerType: 'fraction', answer: { n: p, d: q },
     steps: [`HCF of ${n} and ${d} is ${k}.`, `Divide both by ${k}: ${p}/${q}.`],
@@ -235,9 +238,9 @@ function lo10(level) {
 
 // LO11 — Fractions of fractions
 function lo11(level) {
-  const f1 = properFrac(level >= 3 ? 9 : 6);
-  const f2 = properFrac(level >= 3 ? 9 : 6);
-  if (level === 4) {
+  const f1 = properFrac(level >= 5 ? 12 : level >= 3 ? 9 : 6);
+  const f2 = properFrac(level >= 5 ? 12 : level >= 3 ? 9 : 6);
+  if (level >= 4) {
     const ans = simplify(f1.n * f2.n, f1.d * f2.d);
     return { skillId: 'lo11', level, prompt: `A tank is ${fracStr(f1)} full. ${fracStr(f2)} of the water is used. What fraction of the whole tank is used?`,
       answerType: 'fraction', answer: ans,
@@ -252,11 +255,11 @@ function lo11(level) {
 
 // LO12 — Fraction of whole -> part:part ratio
 function lo12(level) {
-  const d = randInt(4, 12);
+  const d = randInt(4, level >= 5 ? 16 : 12);
   const n = randInt(1, d - 1);
   const rest = d - n;
-  if (level === 4) {
-    const part = randInt(2, 9);
+  if (level >= 4) {
+    const part = randInt(2, level >= 5 ? 15 : 9);
     const restCount = rest * part;
     const answer = n * part;
     return { skillId: 'lo12', level, prompt: `${n}/${d} of visitors are adults, the rest children. There are ${restCount} children. How many adults?`,
@@ -282,8 +285,8 @@ function lo13(level) {
       steps: [`Two options multiply x by ${m}; the odd one multiplies by ${m + 1}.`, `So "${correct}" is different.`],
       hint: 'Find the multiplier in each.' };
   }
-  const m = level === 1 ? randInt(2, 5) : clean(randInt(20, 30) / 10);
-  const x = randInt(2, 6);
+  const m = level === 1 ? randInt(2, 5) : clean(randInt(20, level >= 5 ? 45 : 30) / 10);
+  const x = randInt(2, level >= 5 ? 9 : 6);
   const y = clean(x * m);
   return { skillId: 'lo13', level, prompt: level === 3
       ? `A straight-line graph through the origin passes through (${x}, ${y}). What is the multiplier from x to y?`
@@ -312,7 +315,9 @@ function lo14(level) {
       steps: [`First: ${k1 * a1}a + ${k1 * c1}.`, `Second: −${k2}a + ${k2 * c2} (minus flips the signs).`, `Collect: ${k1 * a1 - k2}a + ${k1 * c1 + k2 * c2}`],
       hint: 'Watch the minus before the second bracket.' };
   }
-  const k1 = randInt(2, 4), a1 = randInt(2, 3), c1 = randInt(3, 6), k2 = randInt(2, 4), a2 = randInt(2, 3), c2 = randInt(2, 4), extra = randInt(3, 9);
+  const big = level >= 5;
+  const k1 = randInt(2, big ? 6 : 4), a1 = randInt(2, big ? 4 : 3), c1 = randInt(3, big ? 9 : 6),
+    k2 = randInt(2, big ? 6 : 4), a2 = randInt(2, big ? 4 : 3), c2 = randInt(2, big ? 6 : 4), extra = randInt(3, big ? 15 : 9);
   const con = -k1 * c1 + k2 * c2 - extra;
   return { skillId: 'lo14', level, prompt: `Expand and simplify ${k1}(${a1}x − ${c1}) + ${k2}(${a2}x + ${c2}) − ${extra}`, answerType: 'linear', answer: { coeff: k1 * a1 + k2 * a2, c: con, v: 'x' },
     steps: [`Expand: ${k1 * a1}x − ${k1 * c1}, then ${k2 * a2}x + ${k2 * c2}.`, `x terms: ${k1 * a1 + k2 * a2}x. Numbers: −${k1 * c1}+${k2 * c2}−${extra} = ${con}.`, `= ${k1 * a1 + k2 * a2}x ${con < 0 ? '−' : '+'} ${Math.abs(con)}`],
@@ -322,7 +327,8 @@ function lo14(level) {
 // LO15 — Fractions to decimals
 function lo15(level) {
   const pool = { 1: [['3', '4'], ['1', '4'], ['1', '2']], 2: [['7', '10'], ['3', '10'], ['9', '10']],
-    3: [['3', '8'], ['5', '8'], ['7', '8']], 4: [['7', '16'], ['5', '16'], ['3', '16']] };
+    3: [['3', '8'], ['5', '8'], ['7', '8']], 4: [['7', '16'], ['5', '16'], ['3', '16']],
+    5: [['9', '40'], ['7', '20'], ['13', '40'], ['1', '32']] };
   const [n, d] = choice(pool[level]).map(Number);
   const answer = clean(n / d);
   return { skillId: 'lo15', level, prompt: `Write ${n}/${d} as a decimal`, answerType: 'decimal', answer,
@@ -331,8 +337,9 @@ function lo15(level) {
 
 // LO16 — Ratio recipes
 function lo16(level) {
-  const a = randInt(2, 7), b = randInt(2, 7);
-  const part = randInt(4, 18);
+  const hi = level >= 5 ? 12 : level >= 4 ? 9 : 7;
+  const a = randInt(2, hi), b = randInt(2, hi);
+  const part = randInt(4, level >= 5 ? 30 : level >= 4 ? 24 : 18);
   const givenA = a * part;
   const answer = b * part;
   const names = choice([['flour', 'sugar'], ['oil', 'water'], ['red', 'blue']]);
@@ -344,8 +351,8 @@ function lo16(level) {
 
 // LO16b — Scale factor multiplier
 function lo16b(level) {
-  const have = randInt(4, 10);
-  const need = randInt(have + 1, have + 12);
+  const have = randInt(4, level >= 5 ? 18 : level >= 4 ? 14 : 10);
+  const need = randInt(have + 1, have + (level >= 5 ? 24 : level >= 4 ? 18 : 12));
   const answer = clean(need / have);
   return { skillId: 'lo16b', level, prompt: `A recipe makes ${have} portions. You need ${need}. What multiplier should you use?`,
     answerType: 'decimal', answer,
@@ -354,7 +361,7 @@ function lo16b(level) {
 
 // LO17 — Remaining fraction
 function lo17(level) {
-  const maxD = level >= 3 ? 12 : 6;
+  const maxD = level >= 5 ? 15 : level >= 3 ? 12 : 6;
   const f1 = properFrac(maxD);
   let f2 = properFrac(maxD);
   let guard = 0;
@@ -371,7 +378,7 @@ function lo17(level) {
 // LO18 — Find the whole from a fraction
 function lo18(level) {
   if (level >= 3) {
-    const mk = () => { const d = randInt(2, 6); const n = randInt(1, d - 1); const whole = randInt(3, 12) * d; return { n, d, whole, part: (n * whole) / d }; };
+    const mk = () => { const d = randInt(2, level >= 5 ? 9 : 6); const n = randInt(1, d - 1); const whole = randInt(3, level >= 5 ? 20 : 12) * d; return { n, d, whole, part: (n * whole) / d }; };
     const A = mk(), B = mk();
     const correct = A.whole >= B.whole ? 'A' : 'B';
     const { options, answer } = shuffleChoice(correct, [correct === 'A' ? 'B' : 'A']);
@@ -391,7 +398,7 @@ function lo18(level) {
 
 // LO19 — Algebraic terms and constants
 function lo19(level) {
-  const coeff = randInt(2, 9), con = randInt(2, 11), v = choice(['x', 'a', 'y']);
+  const coeff = randInt(2, level >= 5 ? 15 : 9), con = randInt(2, level >= 5 ? 18 : 11), v = choice(['x', 'a', 'y']);
   if (level === 1)
     return { skillId: 'lo19', level, prompt: `In ${coeff}${v} + ${con}, what is the coefficient of ${v}?`,
       answerType: 'integer', answer: coeff, steps: [`The coefficient is the number multiplying ${v} → ${coeff}.`], hint: 'The number stuck to the letter.' };
@@ -426,7 +433,7 @@ function lo20(level) {
     return { skillId: 'lo20', level, prompt: `Are ${c}${v} and ${c}${v}² like terms?`, answerType: 'choice', options, answer,
       steps: [`${v} and ${v}² are different powers → not like terms.`], hint: `${v} and ${v}² differ.` };
   }
-  const c1 = randInt(3, 8), c2 = randInt(1, c1 - 1), k1 = randInt(2, 9), k2 = randInt(2, 9);
+  const c1 = randInt(3, level >= 5 ? 13 : 8), c2 = randInt(1, c1 - 1), k1 = randInt(2, level >= 5 ? 15 : 9), k2 = randInt(2, level >= 5 ? 15 : 9);
   return { skillId: 'lo20', level, prompt: `Simplify ${c1}${v} + ${k1} − ${c2}${v} + ${k2}`, answerType: 'linear', answer: { coeff: c1 - c2, c: k1 + k2, v },
     steps: [`${v} terms: ${c1}${v} − ${c2}${v} = ${c1 - c2}${v}.`, `Numbers: ${k1} + ${k2} = ${k1 + k2}.`, `= ${c1 - c2}${v} + ${k1 + k2}`],
     hint: 'Group letters, then numbers.' };
@@ -434,7 +441,7 @@ function lo20(level) {
 
 // LO22 — Midpoint of two coordinates
 function lo22(level) {
-  const span = level === 1 ? 8 : 12;
+  const span = level === 1 ? 8 : level >= 5 ? 18 : 12;
   const mk = () => randInt(-span, span);
   let x1 = mk(), x2 = mk(); while ((x1 + x2) % 2 !== 0) x2 = mk();
   let y1 = level === 1 ? 4 : mk(), y2 = level === 1 ? 4 : mk(); while ((y1 + y2) % 2 !== 0) y2 = mk();
@@ -460,8 +467,8 @@ function lo23(level) {
     return { skillId: 'lo23', level, prompt: `${fracStr(f1)} ÷ ${fracStr(f2)}  (answer as a mixed number)`, answerType: 'mixed', answer: ans,
       steps: [`Flip and multiply: ${fracStr(f1)} × ${f2.d}/${f2.n} = ${rn}/${rd}.`, `= ${mixedStr(ans)}`], hint: 'Keep, flip, multiply.' };
   }
-  if (level === 4) {
-    const cupD = choice([6, 8, 10]);
+  if (level >= 4) {
+    const cupD = choice(level >= 5 ? [8, 10, 12] : [6, 8, 10]);
     const jug = randInt(2, cupD - 1);
     return { skillId: 'lo23', level, prompt: `A jug holds ${jug}/${cupD} litre. Each cup holds 1/${cupD} litre. How many cups can be filled?`,
       answerType: 'integer', answer: jug,
@@ -474,8 +481,8 @@ function lo23(level) {
 
 // LO24 — Subtract mixed numbers
 function lo24(level) {
-  const d = level <= 2 ? randInt(2, 6) : choice([3, 4, 5, 6, 10]);
-  const w1 = randInt(3, 8), w2 = randInt(1, w1 - 1);
+  const d = level <= 2 ? randInt(2, 6) : choice(level >= 5 ? [3, 4, 5, 6, 8, 10, 12] : [3, 4, 5, 6, 10]);
+  const w1 = randInt(3, level >= 5 ? 12 : 8), w2 = randInt(1, w1 - 1);
   let n1 = randInt(1, d - 1), n2 = randInt(1, d - 1);
   if (level <= 2) { n1 = randInt(1, d - 1); n2 = randInt(1, n1); }
   const imp1 = w1 * d + n1, imp2 = w2 * d + n2;
@@ -487,9 +494,9 @@ function lo24(level) {
 
 // LO26 — Sharing in a ratio from partial information
 function lo26(level) {
-  const a = randInt(2, 5), b = randInt(2, 5), c = randInt(2, 6);
+  const a = randInt(2, level >= 5 ? 7 : 5), b = randInt(2, level >= 5 ? 7 : 5), c = randInt(2, level >= 5 ? 8 : 6);
   const total = a + b + c;
-  const part = randInt(4, 12);
+  const part = randInt(4, level >= 5 ? 20 : 12);
   if (level >= 3) {
     const known = b * part;
     return { skillId: 'lo26', level, prompt: `M:N:P = ${a}:${b}:${c}. N is ${known}. Find the total amount.`,
@@ -515,7 +522,7 @@ function lo27(level) {
   if (level === 3) { const a = -randInt(10, 18), b = -randInt(2, 9);
     return { skillId: 'lo27', level, prompt: `A freezer is normally ${a}°C. It rises to ${b}°C. How many degrees did it rise?`, answerType: 'integer', answer: b - a,
       steps: [`End − start = ${b} − (${a}) = ${b - a}.`, `It rose ${b - a}°C.`], hint: 'End minus start.' }; }
-  const start = randInt(1, 5), target = -randInt(12, 22);
+  const start = randInt(1, level >= 5 ? 9 : 5), target = -randInt(level >= 5 ? 20 : 12, level >= 5 ? 40 : 22);
   return { skillId: 'lo27', level, prompt: `A freezer is at ${start}°C. It needs to reach ${target}°C. How many degrees must it fall?`, answerType: 'integer', answer: start - target,
     steps: [`Start − target = ${start} − (${target}) = ${start - target}.`, `Must fall ${start - target}°C.`], hint: 'Count the gap down the line.' };
 }
@@ -617,14 +624,14 @@ function lo25(level) {
     }
     return out;
   };
-  if (level === 4) {
+  if (level >= 4) {
     // mix of mixed numbers (>1) and proper fractions (<1), largest first
-    const fr = distinctFracs(2, 8);
+    const fr = distinctFracs(2, level >= 5 ? 10 : 8);
     const mixed = [], seen = new Set();
     let guard = 0;
-    while (mixed.length < 2 && guard < 400) {
+    while (mixed.length < (level >= 5 ? 3 : 2) && guard < 400) {
       guard++;
-      const w = randInt(1, 3), d = randInt(2, 6), nn = randInt(1, d - 1), v = w + nn / d;
+      const w = randInt(1, level >= 5 ? 4 : 3), d = randInt(2, 6), nn = randInt(1, d - 1), v = w + nn / d;
       const key = Math.round(v * 1e6);
       if (seen.has(key)) continue;
       seen.add(key);
@@ -662,7 +669,7 @@ function lo28(level) {
   if (level === 1) { raw = distinctDecimals(3, [1, 2], false, 1); direction = 'asc'; prompt = 'Put these in order, smallest first.'; }
   else if (level === 2) { raw = distinctDecimals(4, [1, 2, 3], false, 1); direction = 'asc'; prompt = 'Put these in order, smallest first.'; }
   else if (level === 3) { raw = distinctDecimals(4, [1, 2], true, 2); direction = 'asc'; prompt = 'Put these in order, smallest first.'; }
-  else { raw = distinctDecimals(4, [1, 2, 3], true, 2); direction = 'desc'; prompt = 'Put these in order, largest first.'; }
+  else { raw = distinctDecimals(level >= 5 ? 5 : 4, [1, 2, 3], true, 2); direction = 'desc'; prompt = 'Put these in order, largest first.'; }
   return buildOrder('lo28', level, raw, direction, prompt,
     'Line up the decimal points and compare place value (closer to zero is larger for negatives).');
 }
@@ -682,6 +689,7 @@ function lo30(level) {
     2: { W: [7, 11], H: [7, 11] },
     3: { W: [9, 15], H: [8, 14] },
     4: { W: [12, 20], H: [11, 18] },
+    5: { W: [16, 26], H: [14, 24] },
   }[level];
   const W = randInt(range.W[0], range.W[1]);
   const H = randInt(range.H[0], range.H[1]);
@@ -734,6 +742,6 @@ export const GENERATORS = {
 };
 
 export function generate(skillId, level) {
-  const lvl = Math.max(1, Math.min(4, level || 1));
+  const lvl = Math.max(1, Math.min(5, level || 1));
   return GENERATORS[skillId](lvl);
 }

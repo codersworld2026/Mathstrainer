@@ -232,6 +232,7 @@ label.lbl { display: block; font-size: 13px; font-weight: 600; color: var(--mute
 .tier-2 { background: #e7e7ea; color: #5f6168; }   /* Silver */
 .tier-3 { background: #f6e7b8; color: #8a6d12; }   /* Gold */
 .tier-4 { background: var(--accent-soft); color: var(--accent); } /* Challenge */
+.tier-5 { background: var(--ink); color: #f6e7b8; }               /* Challenge+ */
 
 /* ---------- multiple choice ---------- */
 .choices { display: flex; flex-direction: column; gap: 10px; padding: 6px 0 2px; }

@@ -23,9 +23,10 @@ Opens at http://localhost:5173. No account, saves to the device. Drop the folder
 Antigravity or Claude Code and run the same two commands.
 
 ## How it matches the pack
-- **Tiers**: Bronze → Silver → Gold → Challenge (levels 1–4). A skill steps up after 3
-  correct in a row and drops back after 2 misses in the last 3 — so he settles at the
-  right tier per topic, exactly like the pack's columns.
+- **Tiers**: Bronze → Silver → Gold → Challenge → **Challenge+** (levels 1–5). The first
+  four mirror the pack's columns; Challenge+ is a stretch tier (same question types, larger
+  / nastier numbers) for when he maxes a topic out. A skill steps up after 3 correct in a
+  row and drops back after 2 misses in the last 3 — so he settles at the right tier per topic.
 - **All 30 learning objectives** are live, with answer formats that fit each one: whole
   numbers, decimals, fractions, mixed numbers, ratios, coordinates, linear expressions
   (e.g. `__x + __`), prime factorisations (type `2^2 x 3^2`), multiple choice for the
