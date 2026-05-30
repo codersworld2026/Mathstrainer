@@ -25,6 +25,18 @@ export function freshLearner(name) {
   };
 }
 
+// Back-fill skills added after a learner was first created (e.g. the diagram
+// pass added lo21/25/28/30). Returns the same object, mutated in place — safe to
+// call on every load. Without this, chooseRound/Progress would hit undefined
+// entries for the new objectives.
+export function ensureAllSkills(learner) {
+  if (!learner?.skills) return learner;
+  for (const s of SKILLS) {
+    if (!learner.skills[s.id]) learner.skills[s.id] = freshSkill();
+  }
+  return learner;
+}
+
 function computeMastery(s) {
   const acc = s.attempts ? s.correct / s.attempts : 0;
   const levelPart = (s.level - 1) / (MAX_LEVEL - 1); // 0..1 across the four tiers
@@ -103,6 +115,19 @@ export function checkAnswer(question, input) {
     }
     case 'choice':
       return Number(input) === q.answer;
+    case 'order': {
+      // input is the learner's arrangement of item ids; correct when the
+      // matching values run strictly in the requested direction.
+      if (!Array.isArray(input) || input.length !== q.items.length) return false;
+      const valOf = (id) => q.items.find((it) => it.id === id)?.value;
+      const vals = input.map(valOf);
+      if (vals.some((v) => v === undefined)) return false;
+      for (let k = 1; k < vals.length; k++) {
+        const ok = q.direction === 'desc' ? vals[k] < vals[k - 1] : vals[k] > vals[k - 1];
+        if (!ok) return false;
+      }
+      return true;
+    }
     case 'primefac':
       return checkPrimeFac(input, q.answer);
     case 'integer': {

@@ -11,7 +11,7 @@
 // Worked "steps" use plain, supportive language to match the inclusion style.
 
 import {
-  randInt, choice, gcd, lcm, simplify, clean, fracStr, toMixed, mixedStr,
+  randInt, choice, shuffle, gcd, lcm, simplify, clean, fracStr, toMixed, mixedStr,
   simplifyRatio, ratioStr, primeFactors, primeFacStr,
 } from './math.js';
 
@@ -536,9 +536,201 @@ function lo29(level) {
     hint: 'For negatives, closer to zero is bigger.' };
 }
 
+// ===========================================================================
+// Diagram pass — LO21, LO25, LO28, LO30.
+// These four carry a `diagram` descriptor (plain data, rendered to SVG by
+// Diagram.jsx) or an `items` list for the drag/reorder input, so generators.js
+// stays pure and testable.
+// ===========================================================================
+
+// A coordinate-grid descriptor for a straight line y = mx + c.
+function lineDiagram(m, c, dots) {
+  const xMin = -5, xMax = 5, yMin = -6, yMax = 6;
+  if (!dots) {
+    const inY = (y) => y >= yMin && y <= yMax;
+    dots = [[0, c]];
+    if (inY(c + m)) dots.push([1, c + m]);
+    else if (inY(c - m)) dots.push([-1, c - m]);
+  }
+  return { kind: 'line', m, c, xMin, xMax, yMin, yMax, dots };
+}
+
+// LO21 — Equation of a line read from a graph
+function lo21(level) {
+  if (level === 1) {
+    const m = randInt(1, 3), c = randInt(1, 4);
+    return { skillId: 'lo21', level, prompt: `Where does this line cross the y-axis?`,
+      answerType: 'integer', answer: c, diagram: lineDiagram(m, c),
+      steps: [`The y-intercept is where the line cuts the vertical (y) axis.`, `Here it crosses at y = ${c}.`],
+      hint: 'Look at where the line meets the up-and-down axis.' };
+  }
+  if (level === 2) {
+    const m = randInt(1, 3), c = randInt(-2, 3);
+    return { skillId: 'lo21', level, prompt: `What is the gradient of this line?`,
+      answerType: 'integer', answer: m, diagram: lineDiagram(m, c),
+      steps: [`Gradient = how many squares up for every 1 square across.`, `Going 1 right, the line goes ${m} up, so the gradient is ${m}.`],
+      hint: 'Count the up-squares for every 1 across.' };
+  }
+  if (level === 3) {
+    const m = choice([1, 2, 3, -1, -2]), c = randInt(-3, 4);
+    return { skillId: 'lo21', level, prompt: `Write the equation of this line in the form y = mx + c`,
+      answerType: 'linear', answer: { coeff: m, c, v: 'x' }, diagram: lineDiagram(m, c),
+      steps: [`Gradient m = ${m} (${m < 0 ? 'down' : 'up'} ${Math.abs(m)} for each 1 across).`, `It crosses the y-axis at ${c}, so c = ${c}.`, `Equation: y = ${m}x ${c < 0 ? '− ' : '+ '}${Math.abs(c)}.`],
+      hint: 'Find the gradient, then the y-intercept.' };
+  }
+  const m = choice([-2, -1, 1, 2, 3]), c = randInt(-3, 3);
+  const dots = [[-1, c - m], [1, c + m]];
+  return { skillId: 'lo21', level, prompt: `The line passes through the two marked points. Find its equation (y = mx + c)`,
+    answerType: 'linear', answer: { coeff: m, c, v: 'x' }, diagram: lineDiagram(m, c, dots),
+    steps: [`From the marked points, going 1 right the line moves ${m} ${m < 0 ? 'down' : 'up'} → gradient ${m}.`, `Following it back to the y-axis gives c = ${c}.`, `Equation: y = ${m}x ${c < 0 ? '− ' : '+ '}${Math.abs(c)}.`],
+    hint: 'Use the two points for the gradient, then track back to the y-axis.' };
+}
+
+// Shuffle a set of {label, value} into a presentation order that is NOT already
+// correct, returning items with stable ids for the reorder UI.
+function buildOrder(skillId, level, raw, direction, prompt, intro) {
+  const items = raw.map((r, i) => ({ id: `o${i}`, label: r.label, value: r.value }));
+  const sortedOK = (arr) => arr.every((it, k) => k === 0 ||
+    (direction === 'desc' ? it.value < arr[k - 1].value : it.value > arr[k - 1].value));
+  let pres = shuffle(items), guard = 0;
+  while (sortedOK(pres) && items.length > 1 && guard < 50) { pres = shuffle(items); guard++; }
+  const sorted = [...items].sort((a, b) => (direction === 'desc' ? b.value - a.value : a.value - b.value));
+  const sep = direction === 'desc' ? ' > ' : ' < ';
+  const piece = (it) => { const d = String(clean(it.value, 3)); return d === it.label ? it.label : `${it.label} = ${d}`; };
+  return { skillId, level, prompt, answerType: 'order', items: pres, direction,
+    steps: [intro, sorted.map(piece).join(',  '), `In order: ${sorted.map((it) => it.label).join(sep)}.`],
+    hint: direction === 'desc' ? 'Largest goes at the top.' : 'Smallest goes at the top.' };
+}
+
+// LO25 — Order fractions & mixed numbers
+function lo25(level) {
+  const distinctFracs = (n, maxD) => {
+    const out = [], seen = new Set();
+    let guard = 0;
+    while (out.length < n && guard < 400) {
+      guard++;
+      const d = randInt(2, maxD), nn = randInt(1, d - 1), v = nn / d;
+      const key = Math.round(v * 1e6);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ label: `${nn}/${d}`, value: v });
+    }
+    return out;
+  };
+  if (level === 4) {
+    // mix of mixed numbers (>1) and proper fractions (<1), largest first
+    const fr = distinctFracs(2, 8);
+    const mixed = [], seen = new Set();
+    let guard = 0;
+    while (mixed.length < 2 && guard < 400) {
+      guard++;
+      const w = randInt(1, 3), d = randInt(2, 6), nn = randInt(1, d - 1), v = w + nn / d;
+      const key = Math.round(v * 1e6);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      mixed.push({ label: `${w} ${nn}/${d}`, value: v });
+    }
+    return buildOrder('lo25', level, [...fr, ...mixed], 'desc',
+      'Put these in order, largest first.', 'Turn each one into a decimal to compare.');
+  }
+  const n = level === 1 ? 3 : 4;
+  const maxD = level === 1 ? 6 : level === 2 ? 9 : 12;
+  return buildOrder('lo25', level, distinctFracs(n, maxD), 'asc',
+    'Put these in order, smallest first.', 'Turn each one into a decimal to compare.');
+}
+
+// LO28 — Order decimals
+function lo28(level) {
+  const distinctDecimals = (n, dps, allowNeg, maxInt) => {
+    const out = [], seen = new Set();
+    let guard = 0;
+    while (out.length < n && guard < 500) {
+      guard++;
+      const dp = choice(dps);
+      const sign = allowNeg ? choice([1, -1, 1]) : 1;
+      const intPart = randInt(0, maxInt);
+      const fracDigits = randInt(0, Math.pow(10, dp) - 1);
+      const v = clean(sign * (intPart + fracDigits / Math.pow(10, dp)));
+      if (v === 0) continue;
+      if (seen.has(v)) continue;
+      seen.add(v);
+      out.push({ label: String(v), value: v });
+    }
+    return out;
+  };
+  let raw, direction, prompt;
+  if (level === 1) { raw = distinctDecimals(3, [1, 2], false, 1); direction = 'asc'; prompt = 'Put these in order, smallest first.'; }
+  else if (level === 2) { raw = distinctDecimals(4, [1, 2, 3], false, 1); direction = 'asc'; prompt = 'Put these in order, smallest first.'; }
+  else if (level === 3) { raw = distinctDecimals(4, [1, 2], true, 2); direction = 'asc'; prompt = 'Put these in order, smallest first.'; }
+  else { raw = distinctDecimals(4, [1, 2, 3], true, 2); direction = 'desc'; prompt = 'Put these in order, largest first.'; }
+  return buildOrder('lo28', level, raw, direction, prompt,
+    'Line up the decimal points and compare place value (closer to zero is larger for negatives).');
+}
+
+// An L-shaped (rectilinear hexagon) descriptor: big W×H rectangle with an a×b
+// notch removed from the top-right corner. `labels` are the side lengths shown
+// on each of the 6 edges (null = the learner must work it out).
+function lShape(W, H, a, b, labels) {
+  const verts = [[0, 0], [W, 0], [W, H - b], [W - a, H - b], [W - a, H], [0, H]];
+  return { kind: 'poly', verts, labels, unit: 'cm' };
+}
+
+// LO30 — Area & perimeter of compound shapes
+function lo30(level) {
+  const range = {
+    1: { W: [6, 10], H: [6, 10] },
+    2: { W: [7, 11], H: [7, 11] },
+    3: { W: [9, 15], H: [8, 14] },
+    4: { W: [12, 20], H: [11, 18] },
+  }[level];
+  const W = randInt(range.W[0], range.W[1]);
+  const H = randInt(range.H[0], range.H[1]);
+  const a = randInt(2, W - 3);           // notch width  (leaves top ≥ 3)
+  const b = randInt(2, H - 3);           // notch height (leaves right side ≥ 3)
+  const area = W * H - a * b;
+  const perim = 2 * (W + H);
+
+  if (level === 1) {
+    const labels = [`${W}`, `${H - b}`, `${a}`, `${b}`, `${W - a}`, `${H}`];
+    return { skillId: 'lo30', level, prompt: `Find the area of this shape (cm²)`,
+      answerType: 'integer', answer: area, diagram: lShape(W, H, a, b, labels),
+      steps: [`Split it into two rectangles.`,
+        `Left part: ${W - a} × ${H} = ${(W - a) * H}.  Right part: ${a} × ${H - b} = ${a * (H - b)}.`,
+        `Add them: ${(W - a) * H} + ${a * (H - b)} = ${area} cm².`],
+      hint: 'Cut it into two rectangles and add the areas.' };
+  }
+  if (level === 2) {
+    const labels = [`${W}`, `${H - b}`, `${a}`, `${b}`, null, null];
+    return { skillId: 'lo30', level, prompt: `Find the perimeter of this shape (cm)`,
+      answerType: 'integer', answer: perim, diagram: lShape(W, H, a, b, labels),
+      steps: [`Two sides aren't labelled — work them out first.`,
+        `Top: ${W} − ${a} = ${W - a}.  Left: ${H - b} + ${b} = ${H}.`,
+        `Add right round: ${W} + ${H - b} + ${a} + ${b} + ${W - a} + ${H} = ${perim} cm.`],
+      hint: 'Opposite sides must match — use that to find the two unlabelled lengths.' };
+  }
+  if (level === 3) {
+    const labels = [`${W}`, `${H - b}`, null, null, `${W - a}`, `${H}`];
+    return { skillId: 'lo30', level, prompt: `Find the area of this shape (cm²)`,
+      answerType: 'integer', answer: area, diagram: lShape(W, H, a, b, labels),
+      steps: [`First find the missing width: ${W} − ${W - a} = ${a}.`,
+        `Left rectangle: ${W - a} × ${H} = ${(W - a) * H}.`,
+        `Right rectangle: ${a} × ${H - b} = ${a * (H - b)}.`,
+        `Area = ${(W - a) * H} + ${a * (H - b)} = ${area} cm².`],
+      hint: 'Work out the missing width first, then split into two rectangles.' };
+  }
+  const labels = [`${W}`, `${H - b}`, `${a}`, `${b}`, null, null];
+  return { skillId: 'lo30', level, prompt: `Find the perimeter of this shape (cm)`,
+    answerType: 'integer', answer: perim, diagram: lShape(W, H, a, b, labels),
+    steps: [`Find the two unlabelled sides.`,
+      `Top: ${W} − ${a} = ${W - a}.  Left: ${H - b} + ${b} = ${H}.`,
+      `Total perimeter: ${W} + ${H - b} + ${a} + ${b} + ${W - a} + ${H} = ${perim} cm.`],
+    hint: 'Find the two missing lengths, then add every side.' };
+}
+
 export const GENERATORS = {
   lo1, lo2, lo3, lo4, lo5, lo6, lo7, lo8, lo9, lo10, lo11, lo12, lo13, lo14,
-  lo15, lo16, lo16b, lo17, lo18, lo19, lo20, lo22, lo23, lo24, lo26, lo27, lo29,
+  lo15, lo16, lo16b, lo17, lo18, lo19, lo20, lo21, lo22, lo23, lo24, lo25,
+  lo26, lo27, lo28, lo29, lo30,
 };
 
 export function generate(skillId, level) {

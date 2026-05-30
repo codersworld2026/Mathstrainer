@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { checkAnswer, ROUND_SIZE, tierName } from '../engine/adaptive.js';
 import { SKILL_NAME } from '../engine/skills.js';
 import { fracStr, mixedStr, ratioStr, primeFacStr } from '../engine/math.js';
+import Diagram from './Diagram.jsx';
+import OrderList from './OrderList.jsx';
 
 // blank input shape for each answer type
 const initAns = (q) => {
@@ -12,6 +14,7 @@ const initAns = (q) => {
     case 'linear': return { coeff: '', c: '' };
     case 'coord': return { x: '', y: '' };
     case 'choice': return null;
+    case 'order': return q.items.map((it) => it.id);
     default: return '';
   }
 };
@@ -24,6 +27,7 @@ const filled = (q, a) => {
     case 'linear': return a.coeff !== '' && a.c !== '';
     case 'coord': return a.x !== '' && a.y !== '';
     case 'choice': return a !== null;
+    case 'order': return true; // always a complete arrangement
     default: return String(a).trim() !== '';
   }
 };
@@ -37,6 +41,10 @@ const formatAnswer = (q) => {
     case 'coord': return `(${q.answer.x}, ${q.answer.y})`;
     case 'choice': return q.options[q.answer];
     case 'primefac': return primeFacStr(q.answer);
+    case 'order': {
+      const sorted = [...q.items].sort((a, b) => (q.direction === 'desc' ? b.value - a.value : a.value - b.value));
+      return sorted.map((it) => it.label).join(q.direction === 'desc' ? ' > ' : ' < ');
+    }
     default: return String(q.answer);
   }
 };
@@ -152,6 +160,11 @@ export default function Round({ questions, onResult, onFinish }) {
             <span className="frac-bar">)</span>
           </div>
         );
+      case 'order':
+        return (
+          <OrderList items={q.items} order={ans} onReorder={setAns}
+            disabled={phase === 'reveal'} direction={q.direction} />
+        );
       case 'primefac':
         return (
           <div className="answer-row">
@@ -195,7 +208,9 @@ export default function Round({ questions, onResult, onFinish }) {
           <span className={`tier tier-${q.level}`}>{tierName(q.level)}</span>
         </div>
 
-        <div className="prompt">{q.prompt}</div>
+        <div className={`prompt ${q.diagram ? 'with-diagram' : ''}`}>{q.prompt}</div>
+
+        {q.diagram && <Diagram data={q.diagram} />}
 
         {renderInput()}
 

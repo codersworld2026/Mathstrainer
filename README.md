@@ -1,4 +1,4 @@
-# Maths Trainer — AP3 edition (Phase 1)
+# Maths Trainer — AP3 edition (Phase 1 + diagram pass)
 
 Adaptive maths practice built to match your son's **Year 7 AP3 Revision Pack** — same
 learning objectives, same Bronze / Silver / Gold / Challenge tiers, same supportive
@@ -26,40 +26,49 @@ Antigravity or Claude Code and run the same two commands.
 - **Tiers**: Bronze → Silver → Gold → Challenge (levels 1–4). A skill steps up after 3
   correct in a row and drops back after 2 misses in the last 3 — so he settles at the
   right tier per topic, exactly like the pack's columns.
-- **27 of the 30 learning objectives** are live as type-the-answer or tap-the-answer
-  questions, with answer formats that fit each one: whole numbers, decimals, fractions,
-  mixed numbers, ratios, coordinates, linear expressions (e.g. `__x + __`), prime
-  factorisations (type `2^2 x 3^2`), and multiple choice for the compare/justify ones.
+- **All 30 learning objectives** are live, with answer formats that fit each one: whole
+  numbers, decimals, fractions, mixed numbers, ratios, coordinates, linear expressions
+  (e.g. `__x + __`), prime factorisations (type `2^2 x 3^2`), multiple choice for the
+  compare/justify ones, **reorder lists** for ordering, and **drawn diagrams** (a
+  coordinate grid for reading a line, an L-shape for compound area/perimeter).
 - **Validated against the pack's answer key** — the maths primitives (mixed numbers,
   prime factors, HCF/LCM, ratio and fraction simplifying, midpoints, etc.) were checked
   directly against the key on pages 14–15, and ~32,000 generated questions all check out.
 
-### Live LOs
+### Live LOs (all 30)
 LO1 fraction of an amount · LO2 improper/mixed · LO3 ratio tables · LO4 perimeter missing
 side · LO5 compare fractions · LO6 prime factorisation · LO7 HCF/LCM · LO8 add/subtract
 same-denominator fractions · LO9 simplify ratios · LO10 simplify fractions · LO11 fraction
 of a fraction · LO12 fraction→ratio · LO13 multiplicative relationships · LO14 expand &
 simplify · LO15 fraction→decimal · LO16 ratio recipes · LO16b scale multipliers · LO17
-remaining fraction · LO18 find the whole · LO19 terms & constants · LO20 like terms · LO22
-midpoints · LO23 divide fractions · LO24 subtract mixed numbers · LO26 sharing a ratio ·
-LO27 negative numbers in context · LO29 compare decimals.
+remaining fraction · LO18 find the whole · LO19 terms & constants · LO20 like terms · **LO21
+equation of a line from a graph** · LO22 midpoints · LO23 divide fractions · LO24 subtract
+mixed numbers · **LO25 order fractions/mixed** · LO26 sharing a ratio · LO27 negative
+numbers in context · **LO28 order decimals** · LO29 compare decimals · **LO30 area &
+perimeter of compound shapes**.
 
-### Deferred to the next (diagram) pass — and why
-- **LO21 equation of a line** — Bronze/Silver read the line off a graph (needs a drawn grid).
-- **LO25 order fractions/mixed** and **LO28 order decimals** — need a drag-to-order input.
-- **LO30 area & perimeter of compound shapes** — needs generated L-shape/notch diagrams.
-
-These four are the natural content of the next pass (I can generate SVG grids and shapes).
+### The diagram pass (LO21 · LO25 · LO28 · LO30) — how it works
+- **LO21 equation of a line** — generated SVG coordinate grid. Bronze reads the
+  y-intercept, Silver the gradient, Gold writes `y = mx + c`, Challenge finds the equation
+  from two marked points.
+- **LO25 / LO28 ordering** — a reorder list (tap ▲/▼ to arrange smallest- or largest-first).
+  Touch-friendly, no drag library. Decimals include the classic `0.5` vs `0.45` trap and
+  negatives at the higher tiers; LO25 mixes fractions and mixed numbers.
+- **LO30 compound shapes** — generated L-shapes (a rectangle with a corner notch). Area
+  tiers split into two rectangles; perimeter tiers leave two sides unlabelled so he has to
+  work them out before adding. Diagrams are pure-data descriptors rendered by `Diagram.jsx`.
 
 ## Where things live
 ```
 src/engine/
-  math.js        helpers: gcd/lcm, fractions, mixed numbers, ratios, prime factors
-  generators.js  one generator per LO, four tiers each  ← add LO21/25/28/30 here
-  skills.js      the LO catalogue
-  adaptive.js    tiers, skill selection, spacing, answer checking (all answer types)
+  math.js        helpers: gcd/lcm, fractions, mixed numbers, ratios, primes, shuffle
+  generators.js  one generator per LO, four tiers each (incl. diagram/order descriptors)
+  skills.js      the LO catalogue (all 30)
+  adaptive.js    tiers, skill selection, spacing, answer checking, ensureAllSkills migration
   storage.js     save/load  ← Phase 2 Firebase swap points marked here
 src/components/   Setup, Home, Round, Summary, Progress, Keypad
+  Diagram.jsx     SVG renderer for line graphs (LO21) and compound shapes (LO30)
+  OrderList.jsx   reorder input for the ordering LOs (LO25, LO28)
 src/App.jsx       screen + tab orchestration
 ```
 

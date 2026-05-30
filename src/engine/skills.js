@@ -1,7 +1,7 @@
-// Learning objectives from the Year 7 AP3 Revision Pack that work as
-// type-the-answer / tap-the-answer questions. The four that need diagrams or
-// drag-to-order (LO21 lines from a graph, LO25/LO28 ordering, LO30 compound
-// shapes) are deferred to the diagram pass — see README.
+// Learning objectives from the Year 7 AP3 Revision Pack.
+// All 30 are now live: the original 27 type/tap objectives plus the four added
+// in the diagram pass — LO21 (read a line off a graph), LO25/LO28 (order
+// fractions/decimals), and LO30 (compound-shape area & perimeter).
 
 export const STRAND = 'AP3 Revision';
 
@@ -27,12 +27,16 @@ export const SKILLS = [
   { id: 'lo18',  name: 'Find the whole from a fraction' },
   { id: 'lo19',  name: 'Algebraic terms and constants' },
   { id: 'lo20',  name: 'Like terms' },
+  { id: 'lo21',  name: 'Equation of a line from a graph' },
   { id: 'lo22',  name: 'Midpoint of two coordinates' },
   { id: 'lo23',  name: 'Divide fractions' },
   { id: 'lo24',  name: 'Subtract mixed numbers' },
+  { id: 'lo25',  name: 'Order fractions & mixed numbers' },
   { id: 'lo26',  name: 'Sharing in a ratio (partial info)' },
   { id: 'lo27',  name: 'Negative numbers in context' },
+  { id: 'lo28',  name: 'Order decimals' },
   { id: 'lo29',  name: 'Compare decimals' },
+  { id: 'lo30',  name: 'Area & perimeter of compound shapes' },
 ];
 
 export const SKILL_NAME = Object.fromEntries(SKILLS.map((s) => [s.id, s.name]));

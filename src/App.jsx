@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { load, save, reset as resetStore, setupComplete } from './engine/storage.js';
-import { freshLearner, chooseRound, applyResult, finishRound } from './engine/adaptive.js';
+import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills } from './engine/adaptive.js';
 import Setup from './components/Setup.jsx';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
@@ -22,7 +22,7 @@ export default function App() {
   // load on mount
   useEffect(() => {
     const s = load();
-    if (s && setupComplete(s)) setLearner(s);
+    if (s && setupComplete(s)) setLearner(ensureAllSkills(s));
     setLoaded(true);
   }, []);
 
