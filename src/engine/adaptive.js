@@ -43,18 +43,36 @@ function computeMastery(s) {
   return clean(0.6 * acc + 0.4 * levelPart, 3);
 }
 
-export function chooseRound(learner, size = ROUND_SIZE) {
+// Build a round. Modes:
+//   'adaptive'  (default) — the usual weak/untried/spaced mix
+//   'weak'      — drill his lowest-mastery tried skills first
+//   'quickfire' — same selection as adaptive; the Round adds a timer
+//   'topic'     — every question from one objective (opts.topicId)
+export function chooseRound(learner, opts = {}) {
+  const { mode = 'adaptive', size = ROUND_SIZE, topicId = null } = opts;
   const round = learner.round + 1;
+
+  if (mode === 'topic' && topicId) {
+    const lvl = learner.skills[topicId].level;
+    return Array.from({ length: size }, () => generate(topicId, lvl));
+  }
+
   const scored = SKILLS.map((s) => {
     const st = learner.skills[s.id];
     const untried = st.attempts === 0;
     const acc = st.attempts ? st.correct / st.attempts : 0;
     const sinceSeen = round - st.lastSeenRound;
-    let score = 0;
-    if (untried) score += 100;
-    score += (1 - acc) * 40;
-    score += Math.min(sinceSeen, 8) * 4;
-    score += Math.random() * 6;
+    let score;
+    if (mode === 'weak') {
+      // tried + low mastery floats to the top; untried sink below them
+      score = untried ? -100 + Math.random() : (1 - st.mastery) * 100 + (1 - acc) * 20 + Math.random() * 4;
+    } else {
+      score = 0;
+      if (untried) score += 100;
+      score += (1 - acc) * 40;
+      score += Math.min(sinceSeen, 8) * 4;
+      score += Math.random() * 6;
+    }
     return { id: s.id, score };
   }).sort((a, b) => b.score - a.score);
 
@@ -167,10 +185,10 @@ export function applyResult(learner, question, isCorrect) {
   return next;
 }
 
-export function finishRound(learner, correctCount) {
+export function finishRound(learner, correctCount, total = ROUND_SIZE) {
   const next = structuredClone(learner);
   next.round += 1;
-  next.history = [...next.history, { round: next.round, correct: correctCount, total: ROUND_SIZE, at: Date.now() }].slice(-50);
+  next.history = [...next.history, { round: next.round, correct: correctCount, total, at: Date.now() }].slice(-50);
   return next;
 }
 

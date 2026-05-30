@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { load, save, reset as resetStore, setupComplete } from './engine/storage.js';
-import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills } from './engine/adaptive.js';
+import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, ROUND_SIZE } from './engine/adaptive.js';
 import Setup from './components/Setup.jsx';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
 import Summary from './components/Summary.jsx';
 import Progress from './components/Progress.jsx';
+import TopicPicker from './components/TopicPicker.jsx';
 import Keypad from './components/Keypad.jsx';
 
 export default function App() {
   const [learner, setLearner] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [tab, setTab] = useState('train');           // 'train' | 'progress'
-  const [screen, setScreen] = useState('home');       // 'home' | 'round' | 'summary'
+  const [screen, setScreen] = useState('home');       // 'home' | 'round' | 'summary' | 'topics'
   const [questions, setQuestions] = useState(null);
   const [lastCorrect, setLastCorrect] = useState(0);
+  const [lastTotal, setLastTotal] = useState(ROUND_SIZE);
   const [pinUnlocked, setPinUnlocked] = useState(false);
   const [pinEntry, setPinEntry] = useState('');
   const [pinErr, setPinErr] = useState('');
@@ -44,17 +46,22 @@ export default function App() {
     );
   }
 
-  const startRound = () => {
-    const qs = chooseRound(learner);
+  const startRound = (mode = 'adaptive', topicId = null) => {
+    const size = mode === 'quickfire' ? 8 : ROUND_SIZE;
+    const qs = chooseRound(learner, { mode, topicId, size });
     qs.roundNo = learner.round + 1;
+    qs.mode = mode;
+    qs.topicId = topicId;
     setQuestions(qs);
     setScreen('round');
   };
 
   const handleResult = (q, correct) => setLearner((prev) => applyResult(prev, q, correct));
   const handleFinish = (correctCount) => {
-    setLearner((prev) => finishRound(prev, correctCount));
+    const total = questions.length;
+    setLearner((prev) => finishRound(prev, correctCount, total));
     setLastCorrect(correctCount);
+    setLastTotal(total);
     setScreen('summary');
   };
 
@@ -92,7 +99,23 @@ export default function App() {
         </div>
       </div>
 
-      {tab === 'train' && screen === 'home' && <Home learner={learner} onStart={startRound} />}
+      {tab === 'train' && screen === 'home' && (
+        <Home
+          learner={learner}
+          onStart={() => startRound('adaptive')}
+          onWeak={() => startRound('weak')}
+          onQuickfire={() => startRound('quickfire')}
+          onTopics={() => setScreen('topics')}
+        />
+      )}
+
+      {tab === 'train' && screen === 'topics' && (
+        <TopicPicker
+          learner={learner}
+          onPick={(id) => startRound('topic', id)}
+          onCancel={() => setScreen('home')}
+        />
+      )}
 
       {tab === 'train' && screen === 'round' && questions && (
         <Round questions={questions} onResult={handleResult} onFinish={handleFinish} />
@@ -101,8 +124,9 @@ export default function App() {
       {tab === 'train' && screen === 'summary' && (
         <Summary
           correct={lastCorrect}
+          total={lastTotal}
           learner={learner}
-          onAgain={startRound}
+          onAgain={() => startRound(questions.mode, questions.topicId)}
           onHome={() => setScreen('home')}
         />
       )}

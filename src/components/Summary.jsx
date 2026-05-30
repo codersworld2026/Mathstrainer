@@ -1,17 +1,17 @@
 import React from 'react';
 import { ROUND_SIZE } from '../engine/adaptive.js';
 
-export default function Summary({ correct, learner, onAgain, onHome }) {
-  const perfect = correct === ROUND_SIZE;
-  const msg = perfect ? 'Round won — flawless.'
-    : correct >= 4 ? 'Solid round.'
-    : correct >= 2 ? 'Good work — that’s how it sticks.'
+export default function Summary({ correct, total = ROUND_SIZE, learner, onAgain, onHome }) {
+  const frac = total ? correct / total : 0;
+  const msg = correct === total ? 'Round won — flawless.'
+    : frac >= 0.66 ? 'Solid round.'
+    : frac >= 0.33 ? 'Good work — that’s how it sticks.'
     : 'Every round counts. Keep going.';
 
   return (
     <div className="fade-in">
       <div className="card summary">
-        <div className="big">{correct}<span style={{ color: 'var(--muted)', fontSize: 24 }}>/{ROUND_SIZE}</span></div>
+        <div className="big">{correct}<span style={{ color: 'var(--muted)', fontSize: 24 }}>/{total}</span></div>
         <div className="score">{msg}</div>
         {learner.streak > 1 && <div className="combo">🔥 {learner.streak} combo</div>}
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { checkAnswer, ROUND_SIZE, tierName } from '../engine/adaptive.js';
+import { checkAnswer, tierName } from '../engine/adaptive.js';
 import { SKILL_NAME } from '../engine/skills.js';
 import { fracStr, mixedStr, ratioStr, primeFacStr } from '../engine/math.js';
 import Diagram from './Diagram.jsx';
@@ -51,25 +51,48 @@ const formatAnswer = (q) => {
 
 const clampNum = (s) => s.replace(/[^0-9.\-]/g, '');
 
+const QUICKFIRE_SECONDS = 25;
+
 export default function Round({ questions, onResult, onFinish }) {
+  const size = questions.length;
+  const timed = questions.mode === 'quickfire';
   const [i, setI] = useState(0);
   const [phase, setPhase] = useState('answer');
   const [ans, setAns] = useState(() => initAns(questions[0]));
   const [wasCorrect, setWasCorrect] = useState(false);
+  const [outOfTime, setOutOfTime] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(QUICKFIRE_SECONDS);
   const results = useRef([]);
   const firstField = useRef(null);
+  const lock = useRef(false); // one verdict per question (guards timeout vs submit race)
 
   const q = questions[i];
   useEffect(() => { firstField.current?.focus(); }, [i]);
 
-  const grade = (value) => {
-    const correct = checkAnswer(q, value);
+  // Quickfire countdown — a timeout counts the question as missed.
+  useEffect(() => {
+    if (!timed || phase !== 'answer') return;
+    setTimeLeft(QUICKFIRE_SECONDS);
+    let r = QUICKFIRE_SECONDS;
+    const id = setInterval(() => {
+      r -= 1;
+      setTimeLeft(r);
+      if (r <= 0) { clearInterval(id); finalize(false, true); }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [i, phase, timed]);
+
+  const finalize = (correct, timeout = false) => {
+    if (lock.current) return;
+    lock.current = true;
     results.current.push(correct);
     setWasCorrect(correct);
+    setOutOfTime(timeout);
     setPhase('reveal');
     onResult(q, correct);
   };
+  const grade = (value) => finalize(checkAnswer(q, value));
 
   const submit = () => {
     if (phase === 'reveal') return;
@@ -78,8 +101,10 @@ export default function Round({ questions, onResult, onFinish }) {
   };
 
   const next = () => {
-    if (i + 1 >= ROUND_SIZE) { onFinish(results.current.filter(Boolean).length); return; }
+    if (i + 1 >= size) { onFinish(results.current.filter(Boolean).length); return; }
     const ni = i + 1;
+    lock.current = false;
+    setOutOfTime(false);
     setI(ni);
     setAns(initAns(questions[ni]));
     setPhase('answer');
@@ -185,15 +210,22 @@ export default function Round({ questions, onResult, onFinish }) {
   };
 
   const isChoice = q.answerType === 'choice';
+  const modeLabel = questions.mode === 'weak' ? 'Weak spots'
+    : questions.mode === 'quickfire' ? 'Quickfire'
+    : questions.mode === 'topic' ? SKILL_NAME[questions.topicId]
+    : `Round ${questions.roundNo || ''}`;
 
   return (
     <div className="fade-in">
       <div className="round-head">
         <div className="round-tag">
-          Round {questions.roundNo || ''}<span className="sub"> · {i + 1} of {ROUND_SIZE}</span>
+          {modeLabel}<span className="sub"> · {i + 1} of {size}</span>
+          {timed && phase === 'answer' && (
+            <span className={`timer ${timeLeft <= 5 ? 'low' : ''}`}>⏱ {timeLeft}s</span>
+          )}
         </div>
         <div className="dots">
-          {Array.from({ length: ROUND_SIZE }).map((_, k) => {
+          {Array.from({ length: size }).map((_, k) => {
             let cls = 'dot';
             if (k < results.current.length) cls += results.current[k] ? ' done' : ' miss';
             else if (k === i) cls += ' current';
@@ -222,7 +254,7 @@ export default function Round({ questions, onResult, onFinish }) {
 
         {phase === 'reveal' && (
           <div className={`feedback ${wasCorrect ? 'good' : 'bad'} fade-in`}>
-            <div className="verdict">{wasCorrect ? '✓ Correct' : '✕ Not quite'}</div>
+            <div className="verdict">{wasCorrect ? '✓ Correct' : outOfTime ? "⏱ Time's up" : '✕ Not quite'}</div>
             {!wasCorrect && (
               <div className="solution">
                 {q.steps.map((s, k) => <div className="step" key={k}>{s}</div>)}
@@ -236,7 +268,7 @@ export default function Round({ questions, onResult, onFinish }) {
       <div style={{ height: 14 }} />
       {phase === 'answer'
         ? (!isChoice && <button className="btn" onClick={submit}>Check</button>)
-        : <button className="btn accent" onClick={next} autoFocus>{i + 1 >= ROUND_SIZE ? 'Finish round' : 'Next'}</button>}
+        : <button className="btn accent" onClick={next} autoFocus>{i + 1 >= size ? 'Finish round' : 'Next'}</button>}
     </div>
   );
 }

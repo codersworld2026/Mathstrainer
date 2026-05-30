@@ -34,7 +34,16 @@ Antigravity or Claude Code and run the same two commands.
   coordinate grid for reading a line, an L-shape for compound area/perimeter).
 - **Validated against the pack's answer key** — the maths primitives (mixed numbers,
   prime factors, HCF/LCM, ratio and fraction simplifying, midpoints, etc.) were checked
-  directly against the key on pages 14–15, and ~32,000 generated questions all check out.
+  directly against the key on pages 14–15. Every generator is also re-checked against its
+  own answer key across all five tiers (~186k generated questions) on each change.
+
+### Practice modes (Home screen)
+- **Start round** — the default adaptive mix (weak + untried + spaced repetition).
+- **Weak spots** — a round built only from his lowest-mastery topics (off until he's
+  attempted a few).
+- **Quickfire** — 8 questions with a 25-second timer each; running out counts as a miss.
+- **Pick a topic** — a whole round on one objective at its current tier (good for homework
+  that's stuck on one thing).
 
 ### Live LOs (all 30)
 LO1 fraction of an amount · LO2 improper/mixed · LO3 ratio tables · LO4 perimeter missing
@@ -65,12 +74,13 @@ src/engine/
   math.js        helpers: gcd/lcm, fractions, mixed numbers, ratios, primes, shuffle
   generators.js  one generator per LO, four tiers each (incl. diagram/order descriptors)
   skills.js      the LO catalogue (all 30)
-  adaptive.js    tiers, skill selection, spacing, answer checking, ensureAllSkills migration
+  adaptive.js    tiers, skill selection + round modes, spacing, answer checking, migration
   storage.js     save/load  ← Phase 2 Firebase swap points marked here
 src/components/   Setup, Home, Round, Summary, Progress, Keypad
   Diagram.jsx     SVG renderer for line graphs (LO21) and compound shapes (LO30)
   OrderList.jsx   reorder input for the ordering LOs (LO25, LO28)
-src/App.jsx       screen + tab orchestration
+  TopicPicker.jsx topic-drill list for the "Pick a topic" mode
+src/App.jsx       screen + tab orchestration (home / topics / round / summary)
 ```
 
 ## Phase 2 — cloud login + parent dashboard (Firebase)
