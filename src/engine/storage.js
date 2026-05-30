@@ -1,16 +1,13 @@
-// Persistence layer.
+// Local persistence — the device-side store.
 //
-// PHASE 1 (now): everything is saved to this device with localStorage. No login,
-// so you can run it in Antigravity and see it working straight away.
-//
-// PHASE 2 (next): replace the bodies of load()/save() with Firebase calls.
-// The data shape does NOT change, so nothing else in the app needs touching.
-// The exact spots to edit are marked with  >>> PHASE 2 <<<.
+// In local-only mode (no Firebase keys) this IS the database. In cloud mode it
+// doubles as an offline cache while the source of truth is the per-account
+// Firestore document (see firebase.js: cloudLoad / cloudSave). Same data shape
+// either way, so nothing downstream cares which mode is active.
 
 const KEY = 'maths-trainer:v1';
 
 export function load() {
-  // >>> PHASE 2 <<<  swap for: getDoc(doc(db, 'learners', uid)) and return .data()
   try {
     const raw = localStorage.getItem(KEY);
     return raw ? JSON.parse(raw) : null;
@@ -20,16 +17,25 @@ export function load() {
 }
 
 export function save(state) {
-  // >>> PHASE 2 <<<  swap for: setDoc(doc(db, 'learners', uid), state, { merge: true })
   try {
     localStorage.setItem(KEY, JSON.stringify(state));
   } catch {
-    /* storage full / disabled — ignore for Phase 1 */
+    /* storage full / disabled — ignore */
   }
 }
 
 export function reset() {
   try { localStorage.removeItem(KEY); } catch { /* ignore */ }
+}
+
+// Theme preference ('light' | 'dark') — kept separate from learner data so it
+// applies before/without a profile and survives a progress reset.
+const THEME_KEY = 'maths-trainer:theme';
+export function loadTheme() {
+  try { return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch { return 'light'; }
+}
+export function saveTheme(theme) {
+  try { localStorage.setItem(THEME_KEY, theme); } catch { /* ignore */ }
 }
 
 // --- PIN (Phase 1: stored locally; Phase 2: this whole concept moves under the

@@ -3,7 +3,7 @@ import { SKILLS } from '../engine/skills.js';
 import { overallAccuracy, weakestSkills, tierName, TIERS } from '../engine/adaptive.js';
 import Report from './Report.jsx';
 
-export default function Progress({ learner, onReset, onSetLevel, onSetAll }) {
+export default function Progress({ learner, onReset, onLogout, onSetLevel, onSetAll }) {
   const [view, setView] = useState('activity');
   const acc = overallAccuracy(learner);
   const weak = weakestSkills(learner, 3);
@@ -86,6 +86,7 @@ export default function Progress({ learner, onReset, onSetLevel, onSetAll }) {
       </>)}
 
       <button className="btn ghost" onClick={onReset}>Reset all progress</button>
+      {onLogout && <button className="btn ghost" onClick={onLogout}>Log out</button>}
     </div>
   );
 }

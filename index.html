@@ -12,6 +12,13 @@
     />
   </head>
   <body>
+    <script>
+      // Apply saved theme before React mounts so night mode doesn't flash light.
+      try {
+        if (localStorage.getItem('maths-trainer:theme') === 'dark')
+          document.documentElement.setAttribute('data-theme', 'dark');
+      } catch (e) {}
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

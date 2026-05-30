@@ -75,21 +75,44 @@ src/engine/
   generators.js  one generator per LO, four tiers each (incl. diagram/order descriptors)
   skills.js      the LO catalogue (all 30)
   adaptive.js    tiers, skill selection + round modes, spacing, answer checking, migration
-  storage.js     save/load  ← Phase 2 Firebase swap points marked here
-src/components/   Setup, Home, Round, Summary, Progress, Keypad
+  stats.js       parent-report maths: weekly buckets, streak, totals, calendar
+  storage.js     local save/load (offline cache) + theme preference
+  firebase.js    Phase 2: cloud auth + per-account Firestore sync (env-driven)
+src/components/   Setup, Home, Round, Summary, Progress, Report, Keypad
+  Auth.jsx        parent login / sign-up / password-reset (cloud mode)
   Diagram.jsx     SVG renderer for line graphs (LO21) and compound shapes (LO30)
   OrderList.jsx   reorder input for the ordering LOs (LO25, LO28)
   TopicPicker.jsx topic-drill list for the "Pick a topic" mode
-src/App.jsx       screen + tab orchestration (home / topics / round / summary)
+src/App.jsx       auth gate + screen/tab orchestration, cloud sync
 ```
 
-## Phase 2 — cloud login + parent dashboard (Firebase)
-Data shape doesn't change, so it's a bolt-on. Create a Firebase project (Auth: Email +
-Google, plus Firestore), `npm install firebase`, add your config, and replace the two
-`>>> PHASE 2 <<<` lines in `storage.js` (load → getDoc, save → setDoc). The parent PIN
-gate on the Progress page stays; progress then syncs across your Manchester/Qatar devices.
-> I'll build the login UI, but you create the Firebase project and enter the keys — I don't
-> set up accounts or handle credentials.
+## Phase 2 — cloud login + sync (Firebase) — built
+A parent logs in with **email + password**; the child's profile and progress live in one
+Firestore document per account and sync across your Manchester/Qatar devices. Until you
+add Firebase keys the app runs exactly as before in **local-only mode** (no login), so
+nothing breaks before it's wired up.
+
+**You set up the Firebase project; I never touch your keys or accounts.** One-time steps:
+1. Create a project at <https://console.firebase.google.com>.
+2. **Build → Authentication → Sign-in method → enable Email/Password.**
+3. **Build → Firestore Database → Create database.** Then lock it to each account with:
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /learners/{uid} {
+         allow read, write: if request.auth != null && request.auth.uid == uid;
+       }
+     }
+   }
+   ```
+4. **Project settings → General → Your apps → Web app**; copy the config values.
+5. `cp .env.example .env.local` and paste them in (`.env.local` is gitignored).
+6. `npm install` (the `firebase` package is already in `package.json`), then restart `npm run dev`.
+
+The login screen then appears on launch; the parent PIN still gates the Progress dashboard,
+and a **Log out** button sits in the parent view. Sync writes are throttled (~15s, plus on
+tab-hide) to keep Firestore usage low.
 
 ---
 Get him to do a handful of rounds, then tell me what's clunky and which tier each topic

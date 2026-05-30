@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { load, save, reset as resetStore, setupComplete } from './engine/storage.js';
+import { load, save, reset as resetStore, setupComplete, loadTheme, saveTheme } from './engine/storage.js';
 import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, setSkillLevel, setAllLevels, addActiveTime, ROUND_SIZE } from './engine/adaptive.js';
 import Setup from './components/Setup.jsx';
 import Home from './components/Home.jsx';
@@ -8,6 +8,8 @@ import Summary from './components/Summary.jsx';
 import Progress from './components/Progress.jsx';
 import TopicPicker from './components/TopicPicker.jsx';
 import Keypad from './components/Keypad.jsx';
+import Auth from './components/Auth.jsx';
+import { isFirebaseConfigured, onAuth, cloudLoad, cloudSave, logOut } from './engine/firebase.js';
 
 export default function App() {
   const [learner, setLearner] = useState(null);
@@ -20,16 +22,72 @@ export default function App() {
   const [pinUnlocked, setPinUnlocked] = useState(false);
   const [pinEntry, setPinEntry] = useState('');
   const [pinErr, setPinErr] = useState('');
+  const [theme, setTheme] = useState(loadTheme);
+  const [authUser, setAuthUser] = useState(null);   // Firebase user (cloud mode)
+  const [authReady, setAuthReady] = useState(false); // first auth state received
 
-  // load on mount
+  // apply + persist the day/night theme
   useEffect(() => {
-    const s = load();
-    if (s && setupComplete(s)) setLearner(ensureAllSkills(s));
-    setLoaded(true);
+    document.documentElement.setAttribute('data-theme', theme);
+    saveTheme(theme);
+  }, [theme]);
+
+  // mount: local-only when Firebase isn't configured, else watch auth state
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      const s = load();
+      if (s && setupComplete(s)) setLearner(ensureAllSkills(s));
+      setLoaded(true);
+      setAuthReady(true);
+      return;
+    }
+    return onAuth((user) => { setAuthUser(user); setAuthReady(true); });
   }, []);
 
-  // persist on change
+  // cloud mode: load this account's learner doc on login, clear on logout
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    if (!authUser) {
+      setLearner(null); setLoaded(false); setPinUnlocked(false);
+      setTab('train'); setScreen('home');
+      return;
+    }
+    let cancelled = false;
+    setLoaded(false);
+    cloudLoad(authUser.uid)
+      .then((doc) => {
+        if (cancelled) return;
+        setLearner(doc && setupComplete(doc) ? ensureAllSkills(doc) : null);
+        setLoaded(true);
+      })
+      .catch(() => { if (!cancelled) { setLearner(null); setLoaded(true); } });
+    return () => { cancelled = true; };
+  }, [authUser]);
+
+  // persist on change — local cache (always) + throttled cloud write (cloud mode)
   useEffect(() => { if (learner) save(learner); }, [learner]);
+
+  const learnerRef = useRef(learner);
+  learnerRef.current = learner;
+  const dirty = useRef(false);
+  useEffect(() => { if (isFirebaseConfigured && authUser && learner) dirty.current = true; }, [learner, authUser]);
+  useEffect(() => {
+    if (!isFirebaseConfigured || !authUser) return;
+    const uid = authUser.uid;
+    const flush = () => {
+      if (dirty.current && learnerRef.current) { cloudSave(uid, learnerRef.current); dirty.current = false; }
+    };
+    const id = setInterval(flush, 15000);
+    const onVis = () => { if (document.visibilityState === 'hidden') flush(); };
+    document.addEventListener('visibilitychange', onVis);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('pagehide', flush);
+      flush();
+    };
+  }, [authUser]);
 
   // active screen-time tracking — accrues only while the Train tab is visible
   // and there's been recent interaction (so idle / backgrounded time isn't counted).
@@ -56,9 +114,15 @@ export default function App() {
     };
   }, [ready]);
 
+  // Phase 2: parent login gate (only when Firebase is configured)
+  if (isFirebaseConfigured) {
+    if (!authReady) return <div className="app" />;
+    if (!authUser) return <Auth />;
+  }
+
   if (!loaded) return <div className="app" />;
 
-  // first run
+  // first run on this account / device — set up the child's profile
   if (!learner) {
     return (
       <div className="app">
@@ -66,6 +130,7 @@ export default function App() {
           const base = freshLearner(name);
           base.pin = pin;
           setLearner(base);
+          if (isFirebaseConfigured && authUser) cloudSave(authUser.uid, base);
         }} />
       </div>
     );
@@ -106,8 +171,14 @@ export default function App() {
     const base = freshLearner(learner.name);
     base.pin = learner.pin;
     setLearner(base);
+    if (isFirebaseConfigured && authUser) cloudSave(authUser.uid, base);
     setScreen('home');
     setTab('train');
+  };
+
+  const doLogout = async () => {
+    if (!confirm('Log out of this account? His progress is saved to the cloud.')) return;
+    try { await logOut(); } catch { /* listener still clears local state */ }
   };
 
   return (
@@ -117,10 +188,16 @@ export default function App() {
           <span className="mark">M</span>
           <span className="name">Maths Trainer</span>
         </div>
-        <div className="tabs">
-          <button className={tab === 'train' ? 'active' : ''}
-            onClick={() => { setTab('train'); }}>Train</button>
-          <button className={tab === 'progress' ? 'active' : ''} onClick={goProgress}>Progress</button>
+        <div className="topbar-right">
+          <div className="tabs">
+            <button className={tab === 'train' ? 'active' : ''}
+              onClick={() => { setTab('train'); }}>Train</button>
+            <button className={tab === 'progress' ? 'active' : ''} onClick={goProgress}>Progress</button>
+          </div>
+          <button className="theme-btn" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            aria-label={theme === 'dark' ? 'Switch to day mode' : 'Switch to night mode'}>
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
         </div>
       </div>
 
@@ -173,6 +250,7 @@ export default function App() {
         <Progress
           learner={learner}
           onReset={doReset}
+          onLogout={isFirebaseConfigured ? doLogout : null}
           onSetLevel={(id, lvl) => setLearner((p) => setSkillLevel(p, id, lvl))}
           onSetAll={(lvl) => setLearner((p) => setAllLevels(p, lvl))}
         />
