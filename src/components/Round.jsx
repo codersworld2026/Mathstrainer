@@ -53,7 +53,7 @@ const clampNum = (s) => s.replace(/[^0-9.\-]/g, '');
 
 const QUICKFIRE_SECONDS = 25;
 
-export default function Round({ questions, onResult, onFinish }) {
+export default function Round({ questions, onResult, onFinish, onExit }) {
   const size = questions.length;
   const timed = questions.mode === 'quickfire';
   const [i, setI] = useState(0);
@@ -98,6 +98,13 @@ export default function Round({ questions, onResult, onFinish }) {
     if (phase === 'reveal') return;
     if (!filled(q, ans)) return;
     grade(ans);
+  };
+
+  const exitRound = () => {
+    const answered = results.current.length;
+    if (answered > 0 && answered < size &&
+      !window.confirm('End this round now? Your answers so far are saved.')) return;
+    onExit();
   };
 
   const next = () => {
@@ -218,11 +225,14 @@ export default function Round({ questions, onResult, onFinish }) {
   return (
     <div className="fade-in">
       <div className="round-head">
-        <div className="round-tag">
-          {modeLabel}<span className="sub"> · {i + 1} of {size}</span>
-          {timed && phase === 'answer' && (
-            <span className={`timer ${timeLeft <= 5 ? 'low' : ''}`}>⏱ {timeLeft}s</span>
-          )}
+        <div className="round-head-left">
+          <button className="exit-btn" onClick={exitRound} aria-label="End round and go home">✕</button>
+          <div className="round-tag">
+            {modeLabel}<span className="sub"> · {i + 1} of {size}</span>
+            {timed && phase === 'answer' && (
+              <span className={`timer ${timeLeft <= 5 ? 'low' : ''}`}>⏱ {timeLeft}s</span>
+            )}
+          </div>
         </div>
         <div className="dots">
           {Array.from({ length: size }).map((_, k) => {

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { load, save, reset as resetStore, setupComplete } from './engine/storage.js';
-import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, ROUND_SIZE } from './engine/adaptive.js';
+import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, setSkillLevel, setAllLevels, addActiveTime, ROUND_SIZE } from './engine/adaptive.js';
 import Setup from './components/Setup.jsx';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
@@ -30,6 +30,31 @@ export default function App() {
 
   // persist on change
   useEffect(() => { if (learner) save(learner); }, [learner]);
+
+  // active screen-time tracking — accrues only while the Train tab is visible
+  // and there's been recent interaction (so idle / backgrounded time isn't counted).
+  const tabRef = useRef(tab);
+  tabRef.current = tab;
+  const ready = !!learner;
+  useEffect(() => {
+    if (!ready) return;
+    const TICK = 5, IDLE_MS = 90_000;
+    let lastActive = Date.now();
+    const bump = () => { lastActive = Date.now(); };
+    window.addEventListener('pointerdown', bump);
+    window.addEventListener('keydown', bump);
+    const id = setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      if (tabRef.current !== 'train') return;
+      if (Date.now() - lastActive > IDLE_MS) return;
+      setLearner((prev) => (prev ? addActiveTime(prev, TICK) : prev));
+    }, TICK * 1000);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('pointerdown', bump);
+      window.removeEventListener('keydown', bump);
+    };
+  }, [ready]);
 
   if (!loaded) return <div className="app" />;
 
@@ -118,7 +143,8 @@ export default function App() {
       )}
 
       {tab === 'train' && screen === 'round' && questions && (
-        <Round questions={questions} onResult={handleResult} onFinish={handleFinish} />
+        <Round questions={questions} onResult={handleResult} onFinish={handleFinish}
+          onExit={() => setScreen('home')} />
       )}
 
       {tab === 'train' && screen === 'summary' && (
@@ -143,7 +169,14 @@ export default function App() {
         </div>
       )}
 
-      {tab === 'progress' && pinUnlocked && <Progress learner={learner} onReset={doReset} />}
+      {tab === 'progress' && pinUnlocked && (
+        <Progress
+          learner={learner}
+          onReset={doReset}
+          onSetLevel={(id, lvl) => setLearner((p) => setSkillLevel(p, id, lvl))}
+          onSetAll={(lvl) => setLearner((p) => setAllLevels(p, lvl))}
+        />
+      )}
     </div>
   );
 }

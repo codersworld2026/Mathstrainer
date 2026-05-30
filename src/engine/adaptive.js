@@ -21,8 +21,30 @@ export function freshLearner(name) {
   for (const s of SKILLS) skills[s.id] = freshSkill();
   return {
     name: name || 'Learner', round: 0, xp: 0, streak: 0, bestStreak: 0,
-    totalAttempts: 0, totalCorrect: 0, skills, history: [],
+    totalAttempts: 0, totalCorrect: 0, skills, history: [], activity: {},
   };
+}
+
+// --- per-day activity log: { 'YYYY-MM-DD': { seconds, attempts, correct, rounds } } ---
+// Local-date keyed (the child's device clock) so calendar/weekly views line up.
+export const dayKey = (ts = Date.now()) => {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+function bumpDay(learner, patch, ts = Date.now()) {
+  if (!learner.activity) learner.activity = {};
+  const key = dayKey(ts);
+  const cur = learner.activity[key] || { seconds: 0, attempts: 0, correct: 0, rounds: 0 };
+  const next = { ...cur };
+  for (const [k, v] of Object.entries(patch)) next[k] = (cur[k] || 0) + v;
+  learner.activity[key] = next;
+}
+
+// Accrue active screen-time (called on a tick by App). Returns a new learner.
+export function addActiveTime(learner, seconds) {
+  const next = structuredClone(learner);
+  bumpDay(next, { seconds });
+  return next;
 }
 
 // Back-fill skills added after a learner was first created (e.g. the diagram
@@ -34,7 +56,27 @@ export function ensureAllSkills(learner) {
   for (const s of SKILLS) {
     if (!learner.skills[s.id]) learner.skills[s.id] = freshSkill();
   }
+  if (!learner.activity) learner.activity = {}; // back-fill for pre-activity saves
   return learner;
+}
+
+// --- parent placement: set the tier a topic plays at ---
+// Clears the recent streak so the new tier sticks (no instant demotion from
+// stale misses) and recomputes mastery. Returns a new learner.
+function placeSkill(st, level) {
+  st.level = Math.max(1, Math.min(MAX_LEVEL, level));
+  st.recent = [];
+  st.mastery = computeMastery(st);
+}
+export function setSkillLevel(learner, skillId, level) {
+  const next = structuredClone(learner);
+  if (next.skills[skillId]) placeSkill(next.skills[skillId], level);
+  return next;
+}
+export function setAllLevels(learner, level) {
+  const next = structuredClone(learner);
+  for (const id of Object.keys(next.skills)) placeSkill(next.skills[id], level);
+  return next;
 }
 
 function computeMastery(s) {
@@ -182,6 +224,7 @@ export function applyResult(learner, question, isCorrect) {
   } else {
     next.streak = 0;
   }
+  bumpDay(next, { attempts: 1, correct: isCorrect ? 1 : 0 });
   return next;
 }
 
@@ -189,6 +232,7 @@ export function finishRound(learner, correctCount, total = ROUND_SIZE) {
   const next = structuredClone(learner);
   next.round += 1;
   next.history = [...next.history, { round: next.round, correct: correctCount, total, at: Date.now() }].slice(-50);
+  bumpDay(next, { rounds: 1 });
   return next;
 }
 
