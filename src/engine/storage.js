@@ -38,6 +38,15 @@ export function saveTheme(theme) {
   try { localStorage.setItem(THEME_KEY, theme); } catch { /* ignore */ }
 }
 
+// Sound-effects preference — off by default (good for class/quiet rooms).
+const SOUND_KEY = 'maths-trainer:sound';
+export function loadSound() {
+  try { return localStorage.getItem(SOUND_KEY) === 'on'; } catch { return false; }
+}
+export function saveSound(on) {
+  try { localStorage.setItem(SOUND_KEY, on ? 'on' : 'off'); } catch { /* ignore */ }
+}
+
 // --- PIN (Phase 1: stored locally; Phase 2: this whole concept moves under the
 //     parent's Firebase account, and the parent dashboard sits behind their login) ---
 export function setupComplete(state) {

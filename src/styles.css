@@ -124,6 +124,7 @@ body {
 
 /* ---------- cards ---------- */
 .card {
+  position: relative;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -403,3 +404,81 @@ label.lbl { display: block; font-size: 13px; font-weight: 600; color: var(--mute
 .choice-btn.correct { border-color: var(--good); background: var(--good-soft); color: var(--good-text); }
 .choice-btn.chosen-wrong { border-color: var(--bad); background: var(--bad-soft); color: var(--bad-text); }
 .choice-btn:disabled { cursor: default; }
+
+/* ============================================================
+   TRAIN-SIDE INTERACTIVITY (scene, mascot, game feel, rewards)
+   Progress side is untouched.
+   ============================================================ */
+
+/* ---- playful scene (behind cards, Train only) ---- */
+.scene { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.scene .sky { position: absolute; inset: 0;
+  background: linear-gradient(#7ec8f2 0%, #a9def5 42%, #d9f2e2 70%, #d9f2e2 100%); }
+.scene .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 24%;
+  background: linear-gradient(#57bd60, #3f9b4e); border-top: 5px solid #74d07b; }
+.scene .celestial { position: absolute; top: 7%; right: 13%; width: 60px; height: 60px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 38%, #fff4b3, #ffd23f); box-shadow: 0 0 42px rgba(255,210,63,.55); }
+.scene .clouds span { position: absolute; background: #fff; border-radius: 999px; opacity: .85; }
+.scene .clouds span:nth-child(1) { width: 92px; height: 26px; top: 16%; left: 10%; animation: drift 38s linear infinite; }
+.scene .clouds span:nth-child(2) { width: 64px; height: 20px; top: 28%; left: 60%; animation: drift 52s linear infinite; }
+.scene .clouds span:nth-child(3) { width: 78px; height: 22px; top: 9%; left: 40%; animation: drift 46s linear infinite; }
+@keyframes drift { from { transform: translateX(-40px); } to { transform: translateX(60px); } }
+.scene .mascot { position: absolute; bottom: 15%; left: 6%; width: 82px; height: 150px;
+  transform-origin: bottom center; animation: sway 4.5s ease-in-out infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.scene .mascot.mood-happy { animation: hop .55s ease; }
+@keyframes hop { 0% { transform: translateY(0); } 30% { transform: translateY(-18px) rotate(-5deg); }
+  55% { transform: translateY(0); } 75% { transform: translateY(-7px); } 100% { transform: translateY(0); } }
+.scene .mascot.mood-sad { animation: none; transform: rotate(2deg) translateY(3px); }
+
+/* night sky */
+:root[data-theme="dark"] .scene .sky {
+  background: linear-gradient(#0b1024 0%, #141b38 55%, #102017 100%); }
+:root[data-theme="dark"] .scene .ground {
+  background: linear-gradient(#173420, #0e2415); border-top-color: #20502f; }
+:root[data-theme="dark"] .scene .celestial {
+  background: radial-gradient(circle at 38% 38%, #ffffff, #cdd6f5); box-shadow: 0 0 26px rgba(205,214,245,.4); }
+:root[data-theme="dark"] .scene .clouds { display: none; }
+
+/* ---- game-style answer boxes (Round inputs) ---- */
+.field { border-width: 3px; border-radius: 16px; padding: 16px; box-shadow: 0 2px 0 rgba(20,24,31,.05); }
+.field:focus { box-shadow: 0 0 0 4px var(--primary-soft); }
+
+/* ---- per-question slide-in ---- */
+.q-enter { animation: qslide .28s ease both; }
+@keyframes qslide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+/* ---- answer feedback (pop / shake / green) ---- */
+.answer-zone { position: relative; }
+.answer-zone.pop { animation: popz .45s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes popz { 0% { transform: scale(1); } 40% { transform: scale(1.07); } 100% { transform: scale(1); } }
+.answer-zone.shake { animation: shake .4s; }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); }
+  40% { transform: translateX(9px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
+.answer-zone.good .field { border-color: var(--good); background: var(--good-soft); color: var(--good-text); }
+
+/* ---- floating +XP ---- */
+.xp-pop { position: absolute; top: -8px; left: 50%; pointer-events: none;
+  font-family: var(--display); font-weight: 800; font-size: 22px; color: var(--good);
+  animation: xpfloat 1s ease-out forwards; }
+@keyframes xpfloat {
+  0% { opacity: 0; transform: translate(-50%, 10px) scale(.6); }
+  25% { opacity: 1; transform: translate(-50%, -4px) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -42px) scale(1); } }
+
+/* ---- streak flame in the round header ---- */
+.streak-flame { font-size: 13px; font-weight: 700; white-space: nowrap; color: var(--streak);
+  background: var(--bad-soft); padding: 3px 9px; border-radius: 999px; animation: popz .4s; }
+
+/* ---- confetti ---- */
+.confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; border-radius: var(--radius); }
+.confetti-bit { position: absolute; top: -14px; width: 9px; height: 14px; border-radius: 2px;
+  animation-name: conffall; animation-timing-function: ease-in; animation-fill-mode: forwards; }
+@keyframes conffall {
+  0% { transform: translateY(0) translateX(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(380px) translateX(var(--drift)) rotate(var(--rot)); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene .mascot, .scene .clouds span, .q-enter, .answer-zone.pop, .answer-zone.shake,
+  .xp-pop, .streak-flame, .confetti-bit { animation: none; }
+}

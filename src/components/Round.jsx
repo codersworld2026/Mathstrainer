@@ -1,9 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { checkAnswer, tierName } from '../engine/adaptive.js';
 import { SKILL_NAME } from '../engine/skills.js';
-import { fracStr, mixedStr, ratioStr, primeFacStr } from '../engine/math.js';
+import { fracStr, mixedStr, ratioStr, primeFacStr, choice } from '../engine/math.js';
+import { playCorrect, playWrong, playWin } from '../engine/sound.js';
 import Diagram from './Diagram.jsx';
 import OrderList from './OrderList.jsx';
+import Confetti from './Confetti.jsx';
+
+const PRAISE = ['Nice!', 'Boom!', 'Smashed it!', 'Yes!', 'Spot on!', 'Great!'];
+const STREAK_PRAISE = ['On fire! 🔥', 'Unstoppable!', 'Combo!', 'Brilliant run!'];
+const ENCOURAGE = ['Almost!', 'Good try!', 'Keep going!', 'Nearly had it!'];
+// trailing run of correct answers
+const trailingStreak = (arr) => { let n = 0; for (let k = arr.length - 1; k >= 0 && arr[k]; k--) n++; return n; };
 
 // blank input shape for each answer type
 const initAns = (q) => {
@@ -53,7 +61,7 @@ const clampNum = (s) => s.replace(/[^0-9.\-]/g, '');
 
 const QUICKFIRE_SECONDS = 25;
 
-export default function Round({ questions, onResult, onFinish, onExit }) {
+export default function Round({ questions, onResult, onFinish, onExit, onMood }) {
   const size = questions.length;
   const timed = questions.mode === 'quickfire';
   const [i, setI] = useState(0);
@@ -63,6 +71,10 @@ export default function Round({ questions, onResult, onFinish, onExit }) {
   const [outOfTime, setOutOfTime] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [timeLeft, setTimeLeft] = useState(QUICKFIRE_SECONDS);
+  const [praise, setPraise] = useState('');     // encouraging line on reveal
+  const [xpGain, setXpGain] = useState(0);       // floating "+N" on a correct answer
+  const [streak, setStreak] = useState(0);       // live run of correct this round
+  const [fire, setFire] = useState(0);           // confetti trigger counter
   const results = useRef([]);
   const firstField = useRef(null);
   const lock = useRef(false); // one verdict per question (guards timeout vs submit race)
@@ -91,6 +103,20 @@ export default function Round({ questions, onResult, onFinish, onExit }) {
     setOutOfTime(timeout);
     setPhase('reveal');
     onResult(q, correct);
+
+    const run = trailingStreak(results.current);
+    setStreak(correct ? run : 0);
+    onMood?.(correct ? 'happy' : 'sad');
+    if (correct) {
+      playCorrect();
+      setXpGain(10 + (q.level - 1) * 5);
+      setPraise(run >= 3 ? choice(STREAK_PRAISE) : choice(PRAISE));
+      if (run >= 3 && run % 3 === 0) { setFire((f) => f + 1); playWin(); } // celebrate every 3 in a row
+    } else {
+      playWrong();
+      setXpGain(0);
+      setPraise(timeout ? '' : choice(ENCOURAGE));
+    }
   };
   const grade = (value) => finalize(checkAnswer(q, value));
 
@@ -116,6 +142,9 @@ export default function Round({ questions, onResult, onFinish, onExit }) {
     setAns(initAns(questions[ni]));
     setPhase('answer');
     setShowHint(false);
+    setPraise('');
+    setXpGain(0);
+    onMood?.('idle');
   };
 
   const onKey = (e) => { if (e.key === 'Enter') (phase === 'answer' ? submit() : next()); };
@@ -233,6 +262,7 @@ export default function Round({ questions, onResult, onFinish, onExit }) {
               <span className={`timer ${timeLeft <= 5 ? 'low' : ''}`}>⏱ {timeLeft}s</span>
             )}
           </div>
+          {streak >= 2 && <span className="streak-flame" key={`fl-${streak}`}>🔥 {streak}</span>}
         </div>
         <div className="dots">
           {Array.from({ length: size }).map((_, k) => {
@@ -245,16 +275,24 @@ export default function Round({ questions, onResult, onFinish, onExit }) {
       </div>
 
       <div className="card">
-        <div className="skill-label">
-          {SKILL_NAME[q.skillId]}
-          <span className={`tier tier-${q.level}`}>{tierName(q.level)}</span>
+        <Confetti fire={fire} />
+        <div key={i} className="q-enter">
+          <div className="skill-label">
+            {SKILL_NAME[q.skillId]}
+            <span className={`tier tier-${q.level}`}>{tierName(q.level)}</span>
+          </div>
+
+          <div className={`prompt ${q.diagram ? 'with-diagram' : ''}`}>{q.prompt}</div>
+
+          {q.diagram && <Diagram data={q.diagram} />}
         </div>
 
-        <div className={`prompt ${q.diagram ? 'with-diagram' : ''}`}>{q.prompt}</div>
-
-        {q.diagram && <Diagram data={q.diagram} />}
-
-        {renderInput()}
+        <div className={`answer-zone${phase === 'reveal' ? (wasCorrect ? ' pop good' : (outOfTime ? '' : ' shake')) : ''}`}>
+          {renderInput()}
+          {phase === 'reveal' && wasCorrect && xpGain > 0 && (
+            <span className="xp-pop" key={`xp-${i}`}>+{xpGain}</span>
+          )}
+        </div>
 
         {phase === 'answer' && !isChoice && (
           <div className="hint-line" onClick={() => setShowHint(true)} style={{ cursor: 'pointer' }}>
@@ -264,7 +302,9 @@ export default function Round({ questions, onResult, onFinish, onExit }) {
 
         {phase === 'reveal' && (
           <div className={`feedback ${wasCorrect ? 'good' : 'bad'} fade-in`}>
-            <div className="verdict">{wasCorrect ? '✓ Correct' : outOfTime ? "⏱ Time's up" : '✕ Not quite'}</div>
+            <div className="verdict">
+              {wasCorrect ? `✓ ${praise || 'Correct'}` : outOfTime ? "⏱ Time's up" : `✕ ${praise || 'Not quite'}`}
+            </div>
             {!wasCorrect && (
               <div className="solution">
                 {q.steps.map((s, k) => <div className="step" key={k}>{s}</div>)}

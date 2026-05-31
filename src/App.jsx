@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { load, save, reset as resetStore, setupComplete, loadTheme, saveTheme } from './engine/storage.js';
+import { load, save, reset as resetStore, setupComplete, loadTheme, saveTheme, loadSound, saveSound } from './engine/storage.js';
 import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, setSkillLevel, setAllLevels, addActiveTime, ROUND_SIZE } from './engine/adaptive.js';
+import { setSoundEnabled } from './engine/sound.js';
 import Setup from './components/Setup.jsx';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
 import Summary from './components/Summary.jsx';
 import Progress from './components/Progress.jsx';
 import TopicPicker from './components/TopicPicker.jsx';
+import Scene from './components/Scene.jsx';
 import Keypad from './components/Keypad.jsx';
 import Auth from './components/Auth.jsx';
 import { isFirebaseConfigured, onAuth, cloudLoad, cloudSave, logOut } from './engine/firebase.js';
@@ -23,6 +25,8 @@ export default function App() {
   const [pinEntry, setPinEntry] = useState('');
   const [pinErr, setPinErr] = useState('');
   const [theme, setTheme] = useState(loadTheme);
+  const [soundOn, setSoundOn] = useState(loadSound);
+  const [mascotMood, setMascotMood] = useState('idle'); // ladybug reaction on Train
   const [authUser, setAuthUser] = useState(null);   // Firebase user (cloud mode)
   const [authReady, setAuthReady] = useState(false); // first auth state received
 
@@ -31,6 +35,9 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', theme);
     saveTheme(theme);
   }, [theme]);
+
+  // sound-effects preference → engine + storage
+  useEffect(() => { setSoundEnabled(soundOn); saveSound(soundOn); }, [soundOn]);
 
   // mount: local-only when Firebase isn't configured, else watch auth state
   useEffect(() => {
@@ -143,6 +150,7 @@ export default function App() {
     qs.mode = mode;
     qs.topicId = topicId;
     setQuestions(qs);
+    setMascotMood('idle');
     setScreen('round');
   };
 
@@ -152,8 +160,11 @@ export default function App() {
     setLearner((prev) => finishRound(prev, correctCount, total));
     setLastCorrect(correctCount);
     setLastTotal(total);
+    setMascotMood(correctCount >= Math.ceil(total / 2) ? 'happy' : 'idle');
     setScreen('summary');
   };
+
+  const goHome = () => { setMascotMood('idle'); setScreen('home'); };
 
   const goProgress = () => {
     setTab('progress');
@@ -183,6 +194,7 @@ export default function App() {
 
   return (
     <div className="app">
+      {tab === 'train' && <Scene mood={mascotMood} />}
       <div className="topbar">
         <div className="brand">
           <span className="mark">M</span>
@@ -194,10 +206,19 @@ export default function App() {
               onClick={() => { setTab('train'); }}>Train</button>
             <button className={tab === 'progress' ? 'active' : ''} onClick={goProgress}>Progress</button>
           </div>
+          {tab === 'train' && (
+            <button className="theme-btn" onClick={() => setSoundOn((s) => !s)}
+              aria-label={soundOn ? 'Mute sound' : 'Turn sound on'}>
+              {soundOn ? '🔊' : '🔇'}
+            </button>
+          )}
           <button className="theme-btn" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
             aria-label={theme === 'dark' ? 'Switch to day mode' : 'Switch to night mode'}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
+          {isFirebaseConfigured && (
+            <button className="theme-btn" onClick={doLogout} aria-label="Log out" title="Log out">🚪</button>
+          )}
         </div>
       </div>
 
@@ -221,7 +242,7 @@ export default function App() {
 
       {tab === 'train' && screen === 'round' && questions && (
         <Round questions={questions} onResult={handleResult} onFinish={handleFinish}
-          onExit={() => setScreen('home')} />
+          onExit={goHome} onMood={setMascotMood} />
       )}
 
       {tab === 'train' && screen === 'summary' && (
@@ -230,7 +251,7 @@ export default function App() {
           total={lastTotal}
           learner={learner}
           onAgain={() => startRound(questions.mode, questions.topicId)}
-          onHome={() => setScreen('home')}
+          onHome={goHome}
         />
       )}
 

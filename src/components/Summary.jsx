@@ -1,16 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ROUND_SIZE } from '../engine/adaptive.js';
+import Confetti from './Confetti.jsx';
+import { playWin } from '../engine/sound.js';
 
 export default function Summary({ correct, total = ROUND_SIZE, learner, onAgain, onHome }) {
   const frac = total ? correct / total : 0;
+  const great = frac >= 0.66;
   const msg = correct === total ? 'Round won — flawless.'
     : frac >= 0.66 ? 'Solid round.'
     : frac >= 0.33 ? 'Good work — that’s how it sticks.'
     : 'Every round counts. Keep going.';
 
+  const [fire, setFire] = useState(0);
+  useEffect(() => {
+    if (great) { setFire(1); playWin(); }
+  }, []); // celebrate once on a good round
+
   return (
     <div className="fade-in">
       <div className="card summary">
+        <Confetti fire={fire} />
         <div className="big">{correct}<span style={{ color: 'var(--muted)', fontSize: 24 }}>/{total}</span></div>
         <div className="score">{msg}</div>
         {learner.streak > 1 && <div className="combo">🔥 {learner.streak} combo</div>}
