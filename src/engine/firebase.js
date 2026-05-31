@@ -59,6 +59,7 @@ export function authMessage(code) {
     case 'auth/missing-password': return 'Please enter a password.';
     case 'auth/weak-password': return 'Password should be at least 6 characters.';
     case 'auth/email-already-in-use': return 'That email already has an account — try logging in.';
+    case 'auth/operation-not-allowed': return 'Email/Password sign-in isn’t switched on in Firebase yet (Authentication → Sign-in method).';
     case 'auth/invalid-credential':
     case 'auth/wrong-password':
     case 'auth/user-not-found': return 'Email or password is incorrect.';
