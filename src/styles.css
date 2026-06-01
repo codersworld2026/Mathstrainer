@@ -134,6 +134,17 @@ body {
 .card + .card { margin-top: 14px; }
 
 /* ---------- home ---------- */
+.welcome-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; margin-bottom: 14px;
+  background: var(--primary-soft, var(--surface));
+  border-color: var(--primary);
+}
+.welcome-card .welcome-wave { font-size: 30px; line-height: 1; }
+.welcome-card h2 { font-family: var(--display); font-size: 19px; letter-spacing: -0.01em; margin-bottom: 2px; }
+.welcome-card p { color: var(--muted); font-size: 13.5px; }
+.welcome-card strong { color: var(--ink); font-weight: 700; }
+
 .hero { text-align: center; padding: 30px 22px 26px; }
 .hero h1 { font-family: var(--display); font-size: 30px; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 6px; }
 .hero p { color: var(--muted); font-size: 15px; }

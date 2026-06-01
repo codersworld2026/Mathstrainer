@@ -1,5 +1,7 @@
 import React from 'react';
 import { learnerLevel } from '../engine/adaptive.js';
+import { totals } from '../engine/stats.js';
+import WelcomeBack from './WelcomeBack.jsx';
 
 export default function Home({ learner, onStart, onWeak, onQuickfire, onTopics }) {
   const level = learnerLevel(learner.xp);
@@ -7,8 +9,14 @@ export default function Home({ learner, onStart, onWeak, onQuickfire, onTopics }
     (h) => Date.now() - h.at < 24 * 60 * 60 * 1000
   ).length;
 
+  const t = totals(learner);
+  const accuracy = t.attempts ? Math.round((t.correct / t.attempts) * 100) : 0;
+
   return (
     <div className="fade-in">
+      {t.attempts > 0 && (
+        <WelcomeBack name={learner.name} totalQuestions={t.attempts} accuracy={accuracy} />
+      )}
       <div className="card hero">
         <h1>Ready, {learner.name}?</h1>
         <p>{learner.round === 0 ? 'First round — let’s find your level.' : 'One short round. Six questions.'}</p>
