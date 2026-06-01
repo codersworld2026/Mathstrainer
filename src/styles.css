@@ -133,6 +133,40 @@ body {
 }
 .card + .card { margin-top: 14px; }
 
+/* ---------- landing page ---------- */
+.landing .topbar-right { gap: 10px; }
+.landing-user { display: flex; align-items: center; gap: 10px; }
+.landing-user .who {
+  font-size: 13px; font-weight: 600; color: var(--muted);
+  max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.btn.ghost.small { width: auto; padding: 8px 14px; font-size: 13px; border: 1px solid var(--line); border-radius: 10px; }
+.btn.ghost.small:hover { border-color: var(--primary); color: var(--ink); }
+
+.landing-hero { text-align: center; padding: 34px 26px 30px; }
+.landing-badge {
+  display: inline-block; background: var(--primary-soft); color: var(--primary);
+  font-size: 12px; font-weight: 700; letter-spacing: .03em;
+  padding: 6px 13px; border-radius: 999px; margin-bottom: 16px;
+}
+.landing-hero h1 { font-family: var(--display); font-size: 32px; line-height: 1.08; letter-spacing: -0.02em; margin-bottom: 12px; }
+.landing-lead { font-size: 16px; color: var(--ink); font-weight: 600; margin-bottom: 10px; }
+.landing-body { font-size: 14.5px; color: var(--muted); line-height: 1.55; max-width: 30em; margin: 0 auto; }
+
+.landing-points {
+  list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+  margin: 22px 0 24px;
+}
+.landing-points li {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px;
+  padding: 9px 13px; font-size: 13px; font-weight: 600; color: var(--ink);
+}
+.landing-points .lp-ico { font-size: 16px; }
+
+.landing-cta { max-width: 320px; margin: 0 auto; }
+.landing-hint { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+
 /* ---------- home ---------- */
 .welcome-card {
   display: flex; align-items: center; gap: 14px;

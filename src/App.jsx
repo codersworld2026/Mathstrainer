@@ -3,6 +3,7 @@ import { load, save, reset as resetStore, setupComplete, loadTheme, saveTheme, l
 import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, setSkillLevel, setAllLevels, addActiveTime, ROUND_SIZE } from './engine/adaptive.js';
 import { setSoundEnabled } from './engine/sound.js';
 import Setup from './components/Setup.jsx';
+import Landing from './components/Landing.jsx';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
 import Summary from './components/Summary.jsx';
@@ -29,6 +30,7 @@ export default function App() {
   const [mascotMood, setMascotMood] = useState('idle'); // ladybug reaction on Train
   const [authUser, setAuthUser] = useState(null);   // Firebase user (cloud mode)
   const [authReady, setAuthReady] = useState(false); // first auth state received
+  const [entered, setEntered] = useState(false);     // left the landing page for the trainer
 
   // apply + persist the day/night theme
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function App() {
     if (!isFirebaseConfigured) return;
     if (!authUser) {
       setLearner(null); setLoaded(false); setPinUnlocked(false);
-      setTab('train'); setScreen('home');
+      setTab('train'); setScreen('home'); setEntered(false);
       return;
     }
     let cancelled = false;
@@ -121,11 +123,31 @@ export default function App() {
     };
   }, [ready]);
 
-  // Phase 2: parent login gate (only when Firebase is configured)
-  if (isFirebaseConfigured) {
-    if (!authReady) return <div className="app" />;
-    if (!authUser) return <Auth />;
+  const doLogout = async () => {
+    if (!confirm('Log out of this account? His progress is saved to the cloud.')) return;
+    try { await logOut(); } catch { /* listener still clears local state */ }
+  };
+
+  // wait until we know the auth state — avoids a Login/Logout flash on the landing page
+  if (isFirebaseConfigured && !authReady) return <div className="app" />;
+
+  // public landing page — the first screen everyone sees
+  if (!entered) {
+    return (
+      <Landing
+        firebaseOn={isFirebaseConfigured}
+        authUser={authUser}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        onStart={() => setEntered(true)}
+        onLogin={() => setEntered(true)}
+        onLogout={doLogout}
+      />
+    );
   }
+
+  // Phase 2: the trainer sits behind the parent login when Firebase is configured
+  if (isFirebaseConfigured && !authUser) return <Auth onBack={() => setEntered(false)} />;
 
   if (!loaded) return <div className="app" />;
 
@@ -185,11 +207,6 @@ export default function App() {
     if (isFirebaseConfigured && authUser) cloudSave(authUser.uid, base);
     setScreen('home');
     setTab('train');
-  };
-
-  const doLogout = async () => {
-    if (!confirm('Log out of this account? His progress is saved to the cloud.')) return;
-    try { await logOut(); } catch { /* listener still clears local state */ }
   };
 
   return (

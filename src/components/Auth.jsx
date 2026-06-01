@@ -3,7 +3,7 @@ import { signIn, signUp, resetPassword, authMessage } from '../engine/firebase.j
 
 // Parent login gate (Phase 2). On success, App's auth listener swaps screens —
 // this component just drives the form and surfaces errors.
-export default function Auth() {
+export default function Auth({ onBack }) {
   const [mode, setMode] = useState('login'); // 'login' | 'signup'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -83,6 +83,12 @@ export default function Auth() {
               {mode === 'signup' ? 'Log in' : 'Create one'}
             </button>
           </div>
+
+          {onBack && (
+            <button type="button" className="btn ghost" onClick={onBack} disabled={busy}>
+              ← Back to home
+            </button>
+          )}
         </form>
       </div>
     </div>
