@@ -134,6 +134,7 @@ body {
 .card + .card { margin-top: 14px; }
 
 /* ---------- landing page ---------- */
+.landing .topbar, .landing .center-wrap { position: relative; z-index: 1; }
 .landing .topbar-right { gap: 10px; }
 .landing-user { display: flex; align-items: center; gap: 10px; }
 .landing-user .who {
@@ -143,7 +144,43 @@ body {
 .btn.ghost.small { width: auto; padding: 8px 14px; font-size: 13px; border: 1px solid var(--line); border-radius: 10px; }
 .btn.ghost.small:hover { border-color: var(--primary); color: var(--ink); }
 
-.landing-hero { text-align: center; padding: 34px 26px 30px; }
+/* drifting maths symbols in the background */
+.landing-decor { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.landing-decor .decor {
+  position: absolute; font-family: var(--display); font-weight: 800; line-height: 1;
+  opacity: .45; user-select: none; animation: floaty 7s ease-in-out infinite;
+}
+.decor.d-blue { color: var(--primary); }
+.decor.d-green { color: var(--good); }
+.decor.d-amber { color: #f5a524; }
+.decor.d-orange { color: #ff7a1a; }
+.decor.d-purple { color: #7c3aed; }
+.decor.d-pink { color: #ff4d6d; }
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-16px) rotate(6deg); }
+}
+
+.landing-hero { text-align: center; padding: 30px 26px 30px; overflow: hidden; }
+
+/* bouncing maths-symbol badges across the top of the card */
+.landing-icons { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+.landing-icons .li {
+  width: 52px; height: 52px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 800; font-size: 26px; color: #fff;
+  box-shadow: 0 6px 16px rgba(0,0,0,.16);
+  animation: icon-bob 2.4s ease-in-out infinite;
+}
+.landing-icons .li-blue { background: var(--primary); animation-delay: 0s; }
+.landing-icons .li-green { background: var(--good); animation-delay: .2s; }
+.landing-icons .li-amber { background: #f5a524; animation-delay: .4s; }
+.landing-icons .li-purple { background: #7c3aed; animation-delay: .6s; }
+@keyframes icon-bob {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-8px) rotate(3deg); }
+}
+
 .landing-badge {
   display: inline-block; background: var(--primary-soft); color: var(--primary);
   font-size: 12px; font-weight: 700; letter-spacing: .03em;
@@ -159,13 +196,20 @@ body {
 }
 .landing-points li {
   display: flex; align-items: center; gap: 7px;
-  background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px;
+  border: 1px solid var(--line); border-radius: 12px;
   padding: 9px 13px; font-size: 13px; font-weight: 600; color: var(--ink);
 }
+.landing-points .lp-blue { background: var(--primary-soft); border-color: var(--primary); }
+.landing-points .lp-green { background: var(--good-soft); border-color: var(--good); }
+.landing-points .lp-amber { background: var(--bad-soft); border-color: #f5a524; }
 .landing-points .lp-ico { font-size: 16px; }
 
-.landing-cta { max-width: 320px; margin: 0 auto; }
+.landing-cta { max-width: 320px; margin: 0 auto; font-size: 17px; }
 .landing-hint { font-size: 12.5px; color: var(--muted); margin-top: 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-decor .decor, .landing-icons .li { animation: none; }
+}
 
 /* ---------- home ---------- */
 .welcome-card {
