@@ -28,6 +28,8 @@ const DECOR = [
   { s: '3', x: 6, y: 22, size: 40, c: 'd-orange', delay: 1.9 },
 ];
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const ICONS = [
   { s: '＋', c: 'ai-blue' },
   { s: '−', c: 'ai-green' },
@@ -59,13 +61,19 @@ export default function Auth({ onBack }) {
   };
 
   const forgot = async () => {
+    if (busy) return;
     setErr(''); setNote('');
-    if (!email.trim()) { setErr('Enter your email first, then tap reset.'); return; }
+    const addr = email.trim();
+    if (!addr) { setErr('Type your email in the box above first, then tap “Forgot password?”.'); return; }
+    if (!EMAIL_RE.test(addr)) { setErr('That doesn’t look like a valid email — check for typos.'); return; }
+    setBusy(true);
     try {
-      await resetPassword(email);
-      setNote('Password reset email sent — check your inbox.');
+      await resetPassword(addr);
+      setNote(`Reset link sent to ${addr} (if that account exists). It can take a minute — check your spam / junk folder too.`);
     } catch (ex) {
       setErr(authMessage(ex.code));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -121,7 +129,7 @@ export default function Auth({ onBack }) {
 
           {mode === 'login' && (
             <button type="button" className="btn ghost" onClick={forgot} disabled={busy}>
-              Forgot password?
+              {busy ? 'Sending…' : 'Forgot password? Email me a reset link'}
             </button>
           )}
 
