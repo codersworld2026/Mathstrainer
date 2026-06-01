@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SKILLS } from '../engine/skills.js';
 import { overallAccuracy, weakestSkills, tierName, TIERS } from '../engine/adaptive.js';
 import Report from './Report.jsx';
+import ProgressSidebar from './ProgressSidebar.jsx';
 
 // Small titled section header with a maths/data icon — used across the dashboard.
 function SecHead({ icon, title, sub }) {
@@ -16,7 +17,7 @@ function SecHead({ icon, title, sub }) {
   );
 }
 
-export default function Progress({ learner, onReset, onLogout, onSetLevel, onSetAll }) {
+export default function Progress({ learner, onReset, onLogout, onSetLevel, onSetAll, onSetExamDate }) {
   const [view, setView] = useState('activity');
   const acc = overallAccuracy(learner);
   const weak = weakestSkills(learner, 3);
@@ -37,6 +38,8 @@ export default function Progress({ learner, onReset, onLogout, onSetLevel, onSet
         <button className={view === 'skills' ? 'active' : ''} onClick={() => setView('skills')}>🎯 Skills &amp; tiers</button>
       </div>
 
+      <div className="dash-grid">
+        <div className="dash-main">
       {view === 'activity' && <Report learner={learner} />}
 
       {view === 'skills' && (<>
@@ -99,6 +102,10 @@ export default function Progress({ learner, onReset, onLogout, onSetLevel, onSet
           })}
         </div>
       </>)}
+        </div>
+
+        <ProgressSidebar learner={learner} onSetExamDate={onSetExamDate} />
+      </div>
 
       <div className="dash-footer">
         <button className="btn ghost small danger" onClick={onReset}>Reset progress</button>

@@ -209,8 +209,10 @@ export default function App() {
     setTab('train');
   };
 
+  const wide = tab === 'progress' && pinUnlocked;
+
   return (
-    <div className="app">
+    <div className={`app${wide ? ' wide' : ''}`}>
       {tab === 'train' && <Scene mood={mascotMood} />}
       <div className="topbar">
         <div className="brand">
@@ -291,6 +293,7 @@ export default function App() {
           onLogout={isFirebaseConfigured ? doLogout : null}
           onSetLevel={(id, lvl) => setLearner((p) => setSkillLevel(p, id, lvl))}
           onSetAll={(lvl) => setLearner((p) => setAllLevels(p, lvl))}
+          onSetExamDate={(d) => setLearner((p) => ({ ...p, examDate: d }))}
         />
       )}
     </div>
