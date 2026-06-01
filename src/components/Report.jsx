@@ -7,6 +7,19 @@ import {
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const shortMonth = (d) => MONTHS[d.getMonth()].slice(0, 3);
 
+// Titled section header with a maths/data icon — matches the rest of the dashboard.
+function SecHead({ icon, title, sub }) {
+  return (
+    <div className="sec-head">
+      <span className="sec-ico">{icon}</span>
+      <span className="sec-head-text">
+        <span className="sec-title">{title}</span>
+        {sub && <span className="sec-sub">{sub}</span>}
+      </span>
+    </div>
+  );
+}
+
 export default function Report({ learner }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -17,6 +30,7 @@ export default function Report({ learner }) {
   const thisWeek = weeks[0];
   const maxWeekSecs = Math.max(1, ...weeks.map((w) => w.seconds));
   const calWeeks = calendarMonth(learner, year, month);
+  const accAll = t.attempts ? Math.round((t.correct / t.attempts) * 100) : null;
 
   const stepMonth = (delta) => {
     const d = new Date(year, month + delta, 1);
@@ -28,6 +42,7 @@ export default function Report({ learner }) {
   return (
     <div className="fade-in">
       <div className="card">
+        <SecHead icon="⏱" title="Time on task" sub="How long and how often he’s practising" />
         <div className="stat-row" style={{ marginTop: 0 }}>
           <div className="stat"><div className="v">{formatDuration(todaySeconds(learner))}</div><div className="l">Today</div></div>
           <div className="stat"><div className="v">{formatDuration(thisWeek.seconds)}</div><div className="l">This week</div></div>
@@ -36,11 +51,12 @@ export default function Report({ learner }) {
         </div>
         <div className="report-total">
           Total: <strong>{formatDuration(t.seconds)}</strong> over <strong>{t.activeDays}</strong> day{t.activeDays === 1 ? '' : 's'}
-          {' · '}{t.attempts} questions{t.attempts ? ` · ${Math.round((t.correct / t.attempts) * 100)}% correct` : ''}
+          {' · '}<strong>{t.attempts}</strong> questions{accAll === null ? '' : <> · <strong>{accAll}%</strong> correct</>}
         </div>
       </div>
 
       <div className="card">
+        <SecHead icon="📅" title="Practice calendar" sub="Darker days = more minutes" />
         <div className="cal-head">
           <button className="step-btn" onClick={() => stepMonth(-1)} aria-label="Previous month">◀</button>
           <div className="cal-title">{MONTHS[month]} {year}</div>
@@ -69,7 +85,7 @@ export default function Report({ learner }) {
       </div>
 
       <div className="card">
-        <div className="section-title">Weekly progression</div>
+        <SecHead icon="📈" title="Weekly progression" sub="Last 8 weeks · minutes per week" />
         {weeks.every((w) => w.seconds === 0 && w.attempts === 0) ? (
           <div className="parent-note">No activity recorded yet — it’ll fill in as he practises.</div>
         ) : weeks.map((w, k) => {
