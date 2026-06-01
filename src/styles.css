@@ -144,12 +144,13 @@ body {
 .btn.ghost.small { width: auto; padding: 8px 14px; font-size: 13px; border: 1px solid var(--line); border-radius: 10px; }
 .btn.ghost.small:hover { border-color: var(--primary); color: var(--ink); }
 
-/* drifting maths symbols in the background */
-.landing-decor { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.landing-decor .decor {
+/* drifting maths symbols in the background (landing + login) */
+.landing-decor, .auth-decor { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.landing-decor .decor, .auth-decor .decor {
   position: absolute; font-family: var(--display); font-weight: 800; line-height: 1;
   opacity: .45; user-select: none; animation: floaty 7s ease-in-out infinite;
 }
+.auth-decor .decor { opacity: .5; }
 .decor.d-blue { color: var(--primary); }
 .decor.d-green { color: var(--good); }
 .decor.d-amber { color: #f5a524; }
@@ -209,6 +210,30 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .landing-decor .decor, .landing-icons .li { animation: none; }
+}
+
+/* ---------- login page (maths-heavy) ---------- */
+.auth-page .topbar, .auth-page .center-wrap { position: relative; z-index: 1; }
+.auth-card { text-align: center; }
+.auth-card .lbl { text-align: left; }
+
+/* big maths-symbol badges across the top of the login card */
+.auth-icons { display: flex; justify-content: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
+.auth-icons .ai {
+  width: 60px; height: 60px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 800; font-size: 30px; color: #fff;
+  box-shadow: 0 8px 18px rgba(0,0,0,.18);
+  animation: icon-bob 2.4s ease-in-out infinite;
+}
+.auth-icons .ai-blue { background: var(--primary); }
+.auth-icons .ai-green { background: var(--good); }
+.auth-icons .ai-amber { background: #f5a524; }
+.auth-icons .ai-purple { background: #7c3aed; }
+.auth-icons .ai-pink { background: #ff4d6d; }
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-decor .decor, .auth-icons .ai { animation: none; }
 }
 
 /* ---------- home ---------- */
