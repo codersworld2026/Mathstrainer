@@ -368,6 +368,20 @@ body {
 .order-arrow:disabled { opacity: .35; cursor: default; }
 
 .answer-row { display: flex; gap: 10px; align-items: center; justify-content: center; }
+/* ± toggle so negatives can be entered on touch number-pads (no minus key there) */
+.num-wrap { display: inline-flex; align-items: stretch; gap: 8px; }
+/* explicit widths: a width:100% input collapses inside an inline-flex wrapper */
+.num-wrap .field { width: 160px; max-width: none; }
+.num-wrap .field.frac { width: 96px; }
+.sign-btn {
+  flex: 0 0 auto; width: 48px; align-self: stretch;
+  border: 3px solid var(--line); border-radius: 16px; background: var(--bg-2); color: var(--ink);
+  font-family: var(--display); font-weight: 800; font-size: 24px; cursor: pointer;
+  box-shadow: 0 2px 0 rgba(20,24,31,.05); transition: border-color .12s, color .12s;
+}
+.sign-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.sign-btn:active:not(:disabled) { transform: translateY(1px); }
+.sign-btn:disabled { opacity: .4; cursor: default; }
 .field {
   font-family: var(--mono); font-size: 26px; text-align: center; font-weight: 600;
   width: 100%; max-width: 220px; padding: 14px; color: var(--ink);

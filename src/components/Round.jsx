@@ -36,7 +36,7 @@ const filled = (q, a) => {
     case 'coord': return a.x !== '' && a.y !== '';
     case 'choice': return a !== null;
     case 'order': return true; // always a complete arrangement
-    default: return String(a).trim() !== '';
+    default: { const s = String(a).trim(); return s !== '' && s !== '-'; }
   }
 };
 
@@ -150,10 +150,21 @@ export default function Round({ questions, onResult, onFinish, onExit, onMood })
   const onKey = (e) => { if (e.key === 'Enter') (phase === 'answer' ? submit() : next()); };
 
   // --- input renderers ---
-  const numField = (val, set, extraClass = '', ref = null, ph = '?') => (
-    <input ref={ref} className={`field ${extraClass}`} inputMode="numeric" placeholder={ph}
-      value={val} disabled={phase === 'reveal'} onKeyDown={onKey}
-      onChange={(e) => set(clampNum(e.target.value))} />
+  // A ± button toggles the leading minus — touch number-pads have no minus key,
+  // so this is the only reliable way to enter a negative answer on a tablet.
+  const flipSign = (val) => (String(val).startsWith('-') ? String(val).slice(1) : '-' + val);
+  const signBtn = (val, set) => (
+    <button type="button" className="sign-btn" tabIndex={-1} disabled={phase === 'reveal'}
+      onClick={() => set(flipSign(val))} aria-label="Make the number negative or positive">±</button>
+  );
+
+  const numField = (val, set, extraClass = '', ref = null, ph = '?', signed = false) => (
+    <span className="num-wrap">
+      {signed && signBtn(val, set)}
+      <input ref={ref} className={`field ${extraClass}`} inputMode="numeric" placeholder={ph}
+        value={val} disabled={phase === 'reveal'} onKeyDown={onKey}
+        onChange={(e) => set(clampNum(e.target.value))} />
+    </span>
   );
 
   const renderInput = () => {
@@ -177,7 +188,7 @@ export default function Round({ questions, onResult, onFinish, onExit, onMood })
       case 'fraction':
         return (
           <div className="answer-row">
-            {numField(ans.n, (v) => setAns({ ...ans, n: v }), 'frac', firstField)}
+            {numField(ans.n, (v) => setAns({ ...ans, n: v }), 'frac', firstField, '?', true)}
             <span className="frac-bar">/</span>
             {numField(ans.d, (v) => setAns({ ...ans, d: v }), 'frac')}
           </div>
@@ -185,7 +196,7 @@ export default function Round({ questions, onResult, onFinish, onExit, onMood })
       case 'mixed':
         return (
           <div className="answer-row">
-            {numField(ans.w, (v) => setAns({ ...ans, w: v }), 'frac', firstField, 'whole')}
+            {numField(ans.w, (v) => setAns({ ...ans, w: v }), 'frac', firstField, 'whole', true)}
             <span style={{ width: 8 }} />
             {numField(ans.n, (v) => setAns({ ...ans, n: v }), 'frac')}
             <span className="frac-bar">/</span>
@@ -206,18 +217,18 @@ export default function Round({ questions, onResult, onFinish, onExit, onMood })
       case 'linear':
         return (
           <div className="answer-row">
-            {numField(ans.coeff, (v) => setAns({ ...ans, coeff: v }), 'frac', firstField)}
+            {numField(ans.coeff, (v) => setAns({ ...ans, coeff: v }), 'frac', firstField, '?', true)}
             <span className="frac-bar">{q.answer.v} +</span>
-            {numField(ans.c, (v) => setAns({ ...ans, c: v }), 'frac')}
+            {numField(ans.c, (v) => setAns({ ...ans, c: v }), 'frac', null, '?', true)}
           </div>
         );
       case 'coord':
         return (
           <div className="answer-row">
             <span className="frac-bar">(</span>
-            {numField(ans.x, (v) => setAns({ ...ans, x: v }), 'frac', firstField)}
+            {numField(ans.x, (v) => setAns({ ...ans, x: v }), 'frac', firstField, '?', true)}
             <span className="frac-bar">,</span>
-            {numField(ans.y, (v) => setAns({ ...ans, y: v }), 'frac')}
+            {numField(ans.y, (v) => setAns({ ...ans, y: v }), 'frac', null, '?', true)}
             <span className="frac-bar">)</span>
           </div>
         );
@@ -237,9 +248,12 @@ export default function Round({ questions, onResult, onFinish, onExit, onMood })
       default: // integer / decimal
         return (
           <div className="answer-row">
-            <input ref={firstField} className="field" inputMode="decimal" placeholder="Your answer"
-              value={ans} disabled={phase === 'reveal'} onKeyDown={onKey}
-              onChange={(e) => setAns(clampNum(e.target.value))} />
+            <span className="num-wrap">
+              {signBtn(ans, setAns)}
+              <input ref={firstField} className="field" inputMode="decimal" placeholder="Your answer"
+                value={ans} disabled={phase === 'reveal'} onKeyDown={onKey}
+                onChange={(e) => setAns(clampNum(e.target.value))} />
+            </span>
           </div>
         );
     }
