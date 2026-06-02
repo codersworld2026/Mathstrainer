@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { checkAnswer, tierName } from '../engine/adaptive.js';
 import { SKILL_NAME } from '../engine/skills.js';
-import { fracStr, mixedStr, ratioStr, primeFacStr, choice } from '../engine/math.js';
+import { fracStr, mixedStr, ratioStr, primeFacStr, prettyNum, choice } from '../engine/math.js';
 import { playCorrect, playWrong, playWin } from '../engine/sound.js';
 import Diagram from './Diagram.jsx';
 import OrderList from './OrderList.jsx';
@@ -53,8 +53,27 @@ const formatAnswer = (q) => {
       const sorted = [...q.items].sort((a, b) => (q.direction === 'desc' ? b.value - a.value : a.value - b.value));
       return sorted.map((it) => it.label).join(q.direction === 'desc' ? ' > ' : ' < ');
     }
-    default: return String(q.answer);
+    default: return prettyNum(q.answer); // integer / decimal — clean, no calculator tails
   }
+};
+
+// Child-friendly extra feedback for decimal answers.
+const decimalNote = (q, raw, correct) => {
+  if (q.answerType !== 'decimal') return null;
+  const v = parseFloat(String(raw));
+  if (!Number.isFinite(v)) return null;
+  const target = q.answer;
+  if (correct) {
+    // they gave a rounded value rather than the exact one → praise the rounding
+    return Math.abs(v - target) > 1e-6 ? 'Correct — rounded nicely.' : null;
+  }
+  // wrong: misplaced decimal point (out by a factor of 10/100/1000)?
+  for (const f of [0.1, 0.01, 0.001, 10, 100, 1000]) {
+    if (Math.abs(v * f - target) <= 0.05) return 'Almost — check your decimal place.';
+  }
+  // close, but not rounded correctly → nudge toward 2 dp
+  if (Math.abs(v - target) <= 0.1) return 'Good method, but round your answer to 2 decimal places.';
+  return null;
 };
 
 const clampNum = (s) => s.replace(/[^0-9.\-]/g, '');
@@ -107,15 +126,16 @@ export default function Round({ questions, onResult, onFinish, onExit, onMood })
     const run = trailingStreak(results.current);
     setStreak(correct ? run : 0);
     onMood?.(correct ? 'happy' : 'sad');
+    const decNote = timeout ? null : decimalNote(q, ans, correct);
     if (correct) {
       playCorrect();
       setXpGain(10 + (q.level - 1) * 5);
-      setPraise(run >= 3 ? choice(STREAK_PRAISE) : choice(PRAISE));
+      setPraise(decNote || (run >= 3 ? choice(STREAK_PRAISE) : choice(PRAISE)));
       if (run >= 3 && run % 3 === 0) { setFire((f) => f + 1); playWin(); } // celebrate every 3 in a row
     } else {
       playWrong();
       setXpGain(0);
-      setPraise(timeout ? '' : choice(ENCOURAGE));
+      setPraise(timeout ? '' : (decNote || choice(ENCOURAGE)));
     }
   };
   const grade = (value) => finalize(checkAnswer(q, value));

@@ -194,9 +194,16 @@ export function checkAnswer(question, input) {
       const v = parseFloat(String(input).trim());
       return Number.isFinite(v) && v === q.answer;
     }
-    default: { // decimal
-      const v = parseFloat(String(input).trim());
-      return Number.isFinite(v) && Math.abs(v - q.answer) < 1e-6;
+    default: { // decimal — accept any correctly-rounded value (3.3, 3.33, 3.333…)
+      const raw = String(input).trim();
+      const v = parseFloat(raw);
+      if (!Number.isFinite(v)) return false;
+      if (Math.abs(v - q.answer) < 1e-6) return true; // exact (incl. whole-number answers)
+      // otherwise it must be a correct rounding to at least 1 decimal place:
+      // 3.3 / 3.33 / 3.333 all match 10 ÷ 3, but "3" or 3.4 don't.
+      const sdp = Math.min((raw.split('.')[1] || '').length, 10);
+      if (sdp < 1) return false;
+      return Math.abs(v - Number(q.answer.toFixed(sdp))) < 1e-9;
     }
   }
 }

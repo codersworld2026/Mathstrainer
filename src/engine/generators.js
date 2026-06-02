@@ -14,7 +14,7 @@
 
 import {
   randInt, choice, shuffle, gcd, lcm, simplify, clean, fracStr, toMixed, mixedStr,
-  simplifyRatio, ratioStr, primeFactors, primeFacStr,
+  simplifyRatio, ratioStr, primeFactors, primeFacStr, prettyNum,
 } from './math.js';
 
 const properFrac = (maxD) => {
@@ -73,16 +73,16 @@ function lo2(level) {
 function lo3(level) {
   let a, m;
   if (level === 1) { a = randInt(2, 6); m = randInt(2, 5); }
-  else if (level === 2) { a = randInt(3, 9); m = clean(randInt(4, 9) / 3); }
+  else if (level === 2) { a = randInt(3, 9); m = clean(randInt(3, 5) / 2); }   // halves: 1.5 / 2 / 2.5 (terminating)
   else if (level === 3) { a = clean(randInt(3, 9) + 0.5); m = randInt(2, 5); }
   else if (level === 4) { a = randInt(3, 8); m = clean(randInt(20, 45) / 10); }
   else { a = randInt(4, 14); m = clean(randInt(25, 75) / 10); }
   const b = clean(a * m);
   const x = randInt(Math.ceil(a) + 1, Math.ceil(a) + 10);
   const answer = clean(x * m);
-  return { skillId: 'lo3', level, prompt: `In a ratio table, ${a} changes to ${b}. What does ${x} change to?`,
+  return { skillId: 'lo3', level, prompt: `In a ratio table, ${prettyNum(a)} changes to ${prettyNum(b)}. What does ${x} change to?`,
     answerType: 'decimal', answer,
-    steps: [`Find the multiplier: ${b} ÷ ${a} = ${m}.`, `Apply it: ${x} × ${m} = ${answer}.`],
+    steps: [`Find the multiplier: ${prettyNum(b)} ÷ ${prettyNum(a)} = ${prettyNum(m)}.`, `Apply it: ${x} × ${prettyNum(m)} = ${prettyNum(answer)}.`],
     hint: 'Work out what the first number was multiplied by.' };
 }
 
@@ -354,9 +354,11 @@ function lo16b(level) {
   const have = randInt(4, level >= 5 ? 18 : level >= 4 ? 14 : 10);
   const need = randInt(have + 1, have + (level >= 5 ? 24 : level >= 4 ? 18 : 12));
   const answer = clean(need / have);
+  const rounds = prettyNum(answer) !== String(answer); // repeating / long decimal?
   return { skillId: 'lo16b', level, prompt: `A recipe makes ${have} portions. You need ${need}. What multiplier should you use?`,
     answerType: 'decimal', answer,
-    steps: [`Multiplier = new ÷ old = ${need} ÷ ${have} = ${answer}.`], hint: 'New ÷ old.' };
+    steps: [`Multiplier = new ÷ old = ${need} ÷ ${have} = ${prettyNum(answer)}${rounds ? ' (rounded to 2 d.p.)' : ''}.`],
+    hint: rounds ? 'New ÷ old — round your answer to 2 decimal places.' : 'New ÷ old.' };
 }
 
 // LO17 — Remaining fraction
@@ -735,10 +737,38 @@ function lo30(level) {
     hint: 'Find the two missing lengths, then add every side.' };
 }
 
+// Moving decimals — multiply & divide by 10, 100, 1000 (added practice topic).
+// All answers terminate, so they display exactly; the digit-shift idea is made
+// explicit in the steps for Year 7.
+function pow10(level) {
+  const powByLevel = { 1: [10], 2: [10, 100], 3: [10, 100, 1000], 4: [100, 1000], 5: [10, 100, 1000] };
+  const p = choice(powByLevel[level]);
+  const op = level === 1 ? choice(['÷', '×']) : choice(['×', '÷']);
+  // decimal places in the starting number — capped so ÷1000 stays within 5 dp
+  const baseDp = level <= 1 ? 0 : level <= 3 ? choice([0, 1]) : choice([1, 2]);
+  const intPart = randInt(2, level >= 4 ? 9 : 99);
+  const frac = baseDp ? randInt(1, Math.pow(10, baseDp) - 1) / Math.pow(10, baseDp) : 0;
+  const base = clean(intPart + frac);
+  const answer = clean(op === '×' ? base * p : base / p);
+  const places = Math.round(Math.log10(p)); // 1, 2 or 3
+  const dir = op === '×' ? 'left' : 'right';
+  const bigger = op === '×' ? 'bigger' : 'smaller';
+  return {
+    skillId: 'pow10', level,
+    prompt: `Work out ${prettyNum(base)} ${op} ${p}`,
+    answerType: 'decimal', answer,
+    steps: [
+      `${op === '×' ? 'Multiplying' : 'Dividing'} by ${p} moves every digit ${places} place${places === 1 ? '' : 's'} to the ${dir}.`,
+      `The number gets ${bigger}: ${prettyNum(base)} ${op} ${p} = ${prettyNum(answer)}.`,
+    ],
+    hint: `Move each digit ${places} place${places === 1 ? '' : 's'} to the ${dir} (${op === '×' ? 'bigger' : 'smaller'}).`,
+  };
+}
+
 export const GENERATORS = {
   lo1, lo2, lo3, lo4, lo5, lo6, lo7, lo8, lo9, lo10, lo11, lo12, lo13, lo14,
   lo15, lo16, lo16b, lo17, lo18, lo19, lo20, lo21, lo22, lo23, lo24, lo25,
-  lo26, lo27, lo28, lo29, lo30,
+  lo26, lo27, lo28, lo29, lo30, pow10,
 };
 
 export function generate(skillId, level) {

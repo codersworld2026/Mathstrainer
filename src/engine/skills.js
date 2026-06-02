@@ -37,6 +37,7 @@ export const SKILLS = [
   { id: 'lo28',  name: 'Order decimals' },
   { id: 'lo29',  name: 'Compare decimals' },
   { id: 'lo30',  name: 'Area & perimeter of compound shapes' },
+  { id: 'pow10', name: 'Multiply & divide by 10, 100, 1000' },
 ];
 
 export const SKILL_NAME = Object.fromEntries(SKILLS.map((s) => [s.id, s.name]));

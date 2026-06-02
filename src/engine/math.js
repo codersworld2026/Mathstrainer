@@ -45,6 +45,23 @@ export const clean = (x, dp = 6) => {
   return Object.is(r, -0) ? 0 : r;
 };
 
+// Student-friendly number display: no calculator-style trailing decimals.
+//   4          -> "4"        (whole numbers, no ".0000")
+//   2.5        -> "2.5"      (exact short decimals kept as-is)
+//   0.4375     -> "0.4375"   (terminating decimals shown exactly, up to 5 dp)
+//   3.333333   -> "3.33"     (repeating / long decimals rounded to 2 dp)
+// We search for the shortest exact representation up to 5 dp; anything that
+// still doesn't terminate is treated as repeating and rounded to 2 dp.
+export const prettyNum = (x) => {
+  const c = clean(x, 6);
+  if (Object.is(c, -0) || c === 0) return '0';
+  if (Number.isInteger(c)) return String(c);
+  for (let dp = 1; dp <= 5; dp++) {
+    if (Number(c.toFixed(dp)) === c) return c.toFixed(dp);
+  }
+  return c.toFixed(2).replace(/\.?0+$/, '');
+};
+
 export const neg = (x) => (x < 0 ? `(${x})` : `${x}`);
 
 export const fracStr = ({ n, d }) => (d === 1 ? `${n}` : `${n}/${d}`);
