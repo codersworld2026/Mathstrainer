@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { SKILLS } from '../engine/skills.js';
 import { overallAccuracy, weakestSkills, tierName, TIERS } from '../engine/adaptive.js';
+import { groupMastery, nextBest } from '../engine/topics.js';
 import Report from './Report.jsx';
 import ProgressSidebar from './ProgressSidebar.jsx';
+import Achievements from './Achievements.jsx';
 
 // Small titled section header with a maths/data icon — used across the dashboard.
 function SecHead({ icon, title, sub }) {
@@ -17,11 +19,14 @@ function SecHead({ icon, title, sub }) {
   );
 }
 
-export default function Progress({ learner, onReset, onLogout, onSetLevel, onSetAll, onSetExamDate }) {
+export default function Progress({ learner, onReset, onLogout, onSetLevel, onSetAll, onSetExamDate, onPractise }) {
   const [view, setView] = useState('activity');
+  const [confirmReset, setConfirmReset] = useState(false);
   const acc = overallAccuracy(learner);
   const weak = weakestSkills(learner, 3);
   const tried = SKILLS.filter((s) => learner.skills[s.id].attempts > 0).length;
+  const groups = groupMastery(learner);
+  const nb = nextBest(learner);
 
   return (
     <div className="fade-in progress-dash">
@@ -40,77 +45,126 @@ export default function Progress({ learner, onReset, onLogout, onSetLevel, onSet
 
       <div className="dash-grid">
         <div className="dash-main">
-      {view === 'activity' && <Report learner={learner} />}
+          {view === 'activity' && <Report learner={learner} />}
 
-      {view === 'skills' && (<>
-        <div className="card">
-          <SecHead icon="∑" title="Summary" sub="Lifetime totals across every topic" />
-          <div className="stat-row" style={{ marginTop: 0 }}>
-            <div className="stat"><div className="v">{acc}%</div><div className="l">Accuracy</div></div>
-            <div className="stat"><div className="v">{learner.round}</div><div className="l">Rounds</div></div>
-            <div className="stat"><div className="v">{learner.totalAttempts}</div><div className="l">Questions</div></div>
-          </div>
-
-          {weak.length > 0 && (
-            <>
-              <div className="sub-title">🎯 Needs the most work</div>
-              <div className="chip-wrap">
-                {weak.map((s) => <span className="weak-chip" key={s.id}>{s.name}</span>)}
+          {view === 'skills' && (<>
+            <div className="card">
+              <SecHead icon="📈" title="Summary" sub="Lifetime totals across every topic" />
+              <div className="stat-row" style={{ marginTop: 0 }}>
+                <div className="stat"><div className="v">{learner.totalAttempts}</div><div className="l">Questions</div></div>
+                <div className="stat"><div className="v">{learner.round}</div><div className="l">Rounds</div></div>
+                <div className="stat"><div className="v small-stat">{acc}%</div><div className="l">Accuracy</div></div>
               </div>
-            </>
-          )}
-        </div>
 
-        <div className="card">
-          <SecHead icon="🏁" title="Starting tier" sub="Place him where he actually is — set all at once, or nudge each with ◀ ▶" />
-          <div className="tier-set-row">
-            {TIERS.map((t, idx) => (
-              <button key={t} className={`tier-set-btn tier-${idx + 1}`}
-                onClick={() => { if (window.confirm(`Set every topic to ${t}?`)) onSetAll(idx + 1); }}>
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="card">
-          <SecHead icon="📚" title="Skill by skill" sub={`${tried} of ${SKILLS.length} topics started`} />
-          {SKILLS.map((s) => {
-            const st = learner.skills[s.id];
-            const pct = Math.round(st.mastery * 100);
-            const accSkill = st.attempts ? Math.round((st.correct / st.attempts) * 100) : null;
-            return (
-              <div className="mastery" key={s.id}>
-                <div className="row">
-                  <span className="skill-name">{s.name}</span>
-                  <span className="row-right">
-                    <span className="tier-step">
-                      <button className="step-btn" disabled={st.level <= 1} aria-label="Lower tier"
-                        onClick={() => onSetLevel(s.id, st.level - 1)}>◀</button>
-                      <span className={`tier tier-${st.level}`}>{tierName(st.level)}</span>
-                      <button className="step-btn" disabled={st.level >= TIERS.length} aria-label="Raise tier"
-                        onClick={() => onSetLevel(s.id, st.level + 1)}>▶</button>
-                    </span>
-                    <span className="pct">{accSkill === null ? '—' : `${accSkill}%`}</span>
-                  </span>
-                </div>
-                <div className={`bar ${st.attempts === 0 ? 'untouched' : ''}`}>
-                  <span style={{ width: `${st.attempts === 0 ? 100 : Math.max(pct, 4)}%` }} />
-                </div>
+              <div className="nb-strip">
+                <div><span className="nb-label">⭐ Recommended next</span><span className="nb-topic">{nb.name}</span></div>
+                <button className="btn small-cta" onClick={() => onPractise(nb.id)}>Practise now</button>
               </div>
-            );
-          })}
-        </div>
-      </>)}
+
+              {weak.length > 0 && (
+                <>
+                  <div className="sub-title">🎯 Needs the most work — tap to practise</div>
+                  <div className="chip-wrap">
+                    {weak.map((s) => (
+                      <button className="weak-chip clickable" key={s.id} onClick={() => onPractise(s.id)}>{s.name}</button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="card">
+              <SecHead icon="🧠" title="Topic mastery" sub="Progress across the main maths strands" />
+              {groups.map((g) => {
+                const empty = g.count === 0;
+                const notStarted = !empty && g.attempts === 0;
+                return (
+                  <div className="mastery" key={g.key}>
+                    <div className="row">
+                      <span className="skill-name"><span className="grp-ico">{g.icon}</span>{g.name}</span>
+                      <span className="row-right">
+                        {empty ? <span className="tier tier-soon">Coming soon</span>
+                          : <><span className={`tier tier-${g.level}`}>{tierName(g.level)}</span>
+                              <span className="pct">{notStarted ? '—' : `${g.pct}%`}</span></>}
+                      </span>
+                    </div>
+                    <div className={`bar ${empty || notStarted ? 'untouched' : ''}`}>
+                      <span style={{ width: `${empty || notStarted ? 100 : Math.max(g.pct, 4)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="card">
+              <SecHead icon="🏆" title="Achievements" sub="Badges earned so far" />
+              <Achievements learner={learner} />
+            </div>
+
+            <div className="card">
+              <SecHead icon="🏁" title="Starting tier" sub="Place him where he actually is — set all at once, or nudge each with ◀ ▶" />
+              <div className="tier-set-row">
+                {TIERS.map((t, idx) => (
+                  <button key={t} className={`tier-set-btn tier-${idx + 1}`}
+                    onClick={() => { if (window.confirm(`Set every topic to ${t}?`)) onSetAll(idx + 1); }}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="card">
+              <SecHead icon="📚" title="Skill by skill" sub={`${tried} of ${SKILLS.length} topics started`} />
+              {SKILLS.map((s) => {
+                const st = learner.skills[s.id];
+                const pct = Math.round(st.mastery * 100);
+                const accSkill = st.attempts ? Math.round((st.correct / st.attempts) * 100) : null;
+                return (
+                  <div className="mastery" key={s.id}>
+                    <div className="row">
+                      <span className="skill-name">{s.name}</span>
+                      <span className="row-right">
+                        <span className="tier-step">
+                          <button className="step-btn" disabled={st.level <= 1} aria-label="Lower tier"
+                            onClick={() => onSetLevel(s.id, st.level - 1)}>◀</button>
+                          <span className={`tier tier-${st.level}`}>{tierName(st.level)}</span>
+                          <button className="step-btn" disabled={st.level >= TIERS.length} aria-label="Raise tier"
+                            onClick={() => onSetLevel(s.id, st.level + 1)}>▶</button>
+                        </span>
+                        <span className="pct">{accSkill === null ? '—' : `${accSkill}%`}</span>
+                      </span>
+                    </div>
+                    <div className={`bar ${st.attempts === 0 ? 'untouched' : ''}`}>
+                      <span style={{ width: `${st.attempts === 0 ? 100 : Math.max(pct, 4)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>)}
         </div>
 
-        <ProgressSidebar learner={learner} onSetExamDate={onSetExamDate} />
+        <ProgressSidebar learner={learner} onSetExamDate={onSetExamDate} onPractise={onPractise} />
       </div>
 
       <div className="dash-footer">
-        <button className="btn ghost small danger" onClick={onReset}>Reset progress</button>
+        <button className="btn ghost small danger" onClick={() => setConfirmReset(true)}>⚠ Reset all progress</button>
         {onLogout && <button className="btn ghost small" onClick={onLogout}>Log out</button>}
       </div>
+
+      {confirmReset && (
+        <div className="modal-overlay" onClick={() => setConfirmReset(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-ico">⚠️</div>
+            <h2>Are you sure?</h2>
+            <p>This will permanently delete progress, streaks, XP and achievements. It can’t be undone.</p>
+            <div className="modal-actions">
+              <button className="btn secondary" onClick={() => setConfirmReset(false)}>Cancel</button>
+              <button className="btn danger-solid" onClick={() => { setConfirmReset(false); onReset(); }}>Yes, reset everything</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

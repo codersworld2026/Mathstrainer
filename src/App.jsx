@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { load, save, reset as resetStore, setupComplete, loadTheme, saveTheme, loadSound, saveSound } from './engine/storage.js';
-import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, setSkillLevel, setAllLevels, addActiveTime, ROUND_SIZE } from './engine/adaptive.js';
+import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, setSkillLevel, setAllLevels, addActiveTime, dailyAvailable, ROUND_SIZE, DAILY_SIZE } from './engine/adaptive.js';
 import { setSoundEnabled } from './engine/sound.js';
 import Setup from './components/Setup.jsx';
 import Landing from './components/Landing.jsx';
@@ -22,6 +22,7 @@ export default function App() {
   const [questions, setQuestions] = useState(null);
   const [lastCorrect, setLastCorrect] = useState(0);
   const [lastTotal, setLastTotal] = useState(ROUND_SIZE);
+  const [lastDaily, setLastDaily] = useState(false); // did the last finished round count as the daily?
   const [pinUnlocked, setPinUnlocked] = useState(false);
   const [pinEntry, setPinEntry] = useState('');
   const [pinErr, setPinErr] = useState('');
@@ -166,7 +167,7 @@ export default function App() {
   }
 
   const startRound = (mode = 'adaptive', topicId = null) => {
-    const size = mode === 'quickfire' ? 8 : ROUND_SIZE;
+    const size = mode === 'quickfire' ? 8 : mode === 'daily' ? DAILY_SIZE : ROUND_SIZE;
     const qs = chooseRound(learner, { mode, topicId, size });
     qs.roundNo = learner.round + 1;
     qs.mode = mode;
@@ -176,12 +177,19 @@ export default function App() {
     setScreen('round');
   };
 
+  // Practise one topic now — used by the weak-area chips / "Recommended next"
+  // on the parent dashboard, so it jumps back to the Train side.
+  const practiseTopic = (topicId) => { setTab('train'); startRound('topic', topicId); };
+
   const handleResult = (q, correct) => setLearner((prev) => applyResult(prev, q, correct));
   const handleFinish = (correctCount) => {
     const total = questions.length;
-    setLearner((prev) => finishRound(prev, correctCount, total));
+    // only award the daily bonus if this really was today's (still-available) daily
+    const isDaily = questions.mode === 'daily' && dailyAvailable(learner);
+    setLearner((prev) => finishRound(prev, correctCount, total, { daily: isDaily }));
     setLastCorrect(correctCount);
     setLastTotal(total);
+    setLastDaily(isDaily);
     setMascotMood(correctCount >= Math.ceil(total / 2) ? 'happy' : 'idle');
     setScreen('summary');
   };
@@ -198,8 +206,8 @@ export default function App() {
     else { setPinErr('Wrong PIN'); setPinEntry(''); }
   };
 
+  // Confirmed by the modal in Progress before this runs.
   const doReset = () => {
-    if (!confirm('Reset all progress? This cannot be undone.')) return;
     resetStore();
     const base = freshLearner(learner.name);
     base.pin = learner.pin;
@@ -248,6 +256,9 @@ export default function App() {
           onWeak={() => startRound('weak')}
           onQuickfire={() => startRound('quickfire')}
           onTopics={() => setScreen('topics')}
+          onDaily={() => startRound('daily')}
+          onTopic={(id) => startRound('topic', id)}
+          dailyAvailable={dailyAvailable(learner)}
         />
       )}
 
@@ -269,7 +280,8 @@ export default function App() {
           correct={lastCorrect}
           total={lastTotal}
           learner={learner}
-          onAgain={() => startRound(questions.mode, questions.topicId)}
+          daily={lastDaily}
+          onAgain={() => startRound(questions.mode === 'daily' ? 'adaptive' : questions.mode, questions.topicId)}
           onHome={goHome}
         />
       )}
@@ -294,6 +306,7 @@ export default function App() {
           onSetLevel={(id, lvl) => setLearner((p) => setSkillLevel(p, id, lvl))}
           onSetAll={(lvl) => setLearner((p) => setAllLevels(p, lvl))}
           onSetExamDate={(d) => setLearner((p) => ({ ...p, examDate: d }))}
+          onPractise={practiseTopic}
         />
       )}
     </div>

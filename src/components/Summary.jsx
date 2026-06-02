@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { ROUND_SIZE } from '../engine/adaptive.js';
+import { ROUND_SIZE, roundXp } from '../engine/adaptive.js';
 import Confetti from './Confetti.jsx';
 import { playWin } from '../engine/sound.js';
 
-export default function Summary({ correct, total = ROUND_SIZE, learner, onAgain, onHome }) {
+export default function Summary({ correct, total = ROUND_SIZE, learner, daily = false, onAgain, onHome }) {
   const frac = total ? correct / total : 0;
   const great = frac >= 0.66;
-  const msg = correct === total ? 'Round won — flawless.'
+  const xp = roundXp(correct, total, daily);
+  const msg = correct === total ? (daily ? 'Daily Challenge — flawless!' : 'Round won — flawless.')
     : frac >= 0.66 ? 'Solid round.'
     : frac >= 0.33 ? 'Good work — that’s how it sticks.'
     : 'Every round counts. Keep going.';
@@ -22,6 +23,7 @@ export default function Summary({ correct, total = ROUND_SIZE, learner, onAgain,
         <Confetti fire={fire} />
         <div className="big">{correct}<span style={{ color: 'var(--muted)', fontSize: 24 }}>/{total}</span></div>
         <div className="score">{msg}</div>
+        <div className="xp-earned">⚡ +{xp} XP{daily ? ' · Daily Challenge complete 🛡️' : ''}</div>
         {learner.streak > 1 && <div className="combo">🔥 {learner.streak} combo</div>}
       </div>
       <div style={{ height: 14 }} />

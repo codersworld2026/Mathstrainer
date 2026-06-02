@@ -5,8 +5,11 @@
 import { SKILLS } from './skills.js';
 import { generate } from './generators.js';
 import { simplify, clean, isPrime, simplifyRatio } from './math.js';
+import { syncAchievements } from './achievements.js';
 
 export const ROUND_SIZE = 6;
+export const DAILY_SIZE = 5;
+export const XP_PER_LEVEL = 200;
 const RECENT_WINDOW = 5;
 const MAX_LEVEL = 5; // Bronze=1, Silver=2, Gold=3, Challenge=4, Challenge+=5
 export const TIERS = ['Bronze', 'Silver', 'Gold', 'Challenge', 'Challenge+'];
@@ -21,7 +24,8 @@ export function freshLearner(name) {
   for (const s of SKILLS) skills[s.id] = freshSkill();
   return {
     name: name || 'Learner', round: 0, xp: 0, streak: 0, bestStreak: 0,
-    totalAttempts: 0, totalCorrect: 0, skills, history: [], activity: {},
+    totalAttempts: 0, totalCorrect: 0, perfectRounds: 0, skills, history: [], activity: {},
+    achievements: {}, dailyChallenge: { lastDate: null },
   };
 }
 
@@ -57,6 +61,12 @@ export function ensureAllSkills(learner) {
     if (!learner.skills[s.id]) learner.skills[s.id] = freshSkill();
   }
   if (!learner.activity) learner.activity = {}; // back-fill for pre-activity saves
+  // back-fill XP / achievements / daily-challenge fields for older saves
+  if (typeof learner.xp !== 'number') learner.xp = 0;
+  if (typeof learner.perfectRounds !== 'number') learner.perfectRounds = 0;
+  if (!learner.achievements) learner.achievements = {};
+  if (!learner.dailyChallenge) learner.dailyChallenge = { lastDate: null };
+  syncAchievements(learner); // award any badges already earned by past activity
   return learner;
 }
 
@@ -97,6 +107,19 @@ export function chooseRound(learner, opts = {}) {
   if (mode === 'topic' && topicId) {
     const lvl = learner.skills[topicId].level;
     return Array.from({ length: size }, () => generate(topicId, lvl));
+  }
+
+  // Daily challenge — a short mix of weak topics and recently-seen topics.
+  if (mode === 'daily') {
+    const byId = SKILLS.map((s) => ({ id: s.id, st: learner.skills[s.id] }));
+    const weak = byId.filter((x) => x.st.attempts > 0)
+      .sort((a, b) => a.st.mastery - b.st.mastery).slice(0, 3).map((x) => x.id);
+    const recent = [...byId].sort((a, b) => b.st.lastSeenRound - a.st.lastSeenRound)
+      .slice(0, 3).map((x) => x.id);
+    let pool = [...new Set([...weak, ...recent])];
+    // top up from the general adaptive picks if we still need more
+    for (const s of SKILLS) { if (pool.length >= size) break; if (!pool.includes(s.id)) pool.push(s.id); }
+    return pool.slice(0, size).map((id) => generate(id, learner.skills[id].level));
   }
 
   const scored = SKILLS.map((s) => {
@@ -223,24 +246,60 @@ export function applyResult(learner, question, isCorrect) {
   st.mastery = computeMastery(st);
 
   next.totalAttempts += 1;
+  next.xp += 2;                 // +2 XP for attempting any question
   if (isCorrect) {
     next.totalCorrect += 1;
     next.streak += 1;
     next.bestStreak = Math.max(next.bestStreak, next.streak);
-    next.xp += 10 + Math.min(next.streak, 10) + (st.level - 1) * 5;
+    next.xp += 5;               // +5 XP for a correct answer
   } else {
     next.streak = 0;
   }
   bumpDay(next, { attempts: 1, correct: isCorrect ? 1 : 0 });
+  syncAchievements(next);
   return next;
 }
 
-export function finishRound(learner, correctCount, total = ROUND_SIZE) {
+export function finishRound(learner, correctCount, total = ROUND_SIZE, opts = {}) {
   const next = structuredClone(learner);
   next.round += 1;
   next.history = [...next.history, { round: next.round, correct: correctCount, total, at: Date.now() }].slice(-50);
+  next.xp += 20;                                   // +20 XP for completing a round
+  const perfect = total > 0 && correctCount === total;
+  if (perfect) { next.xp += 25; next.perfectRounds = (next.perfectRounds || 0) + 1; } // +25 perfect bonus
+  if (opts.daily) {                                // daily challenge completion
+    next.xp += 50;
+    next.dailyChallenge = { ...(next.dailyChallenge || {}), lastDate: dayKey() };
+  }
   bumpDay(next, { rounds: 1 });
+  syncAchievements(next);
   return next;
+}
+
+// XP earned by completing a round of `total` questions with `correctCount`
+// right — used to show "+N XP" on the summary (mirrors finishRound + per-Q XP).
+export function roundXp(correctCount, total, daily = false) {
+  let xp = total * 2 + correctCount * 5 + 20;
+  if (total > 0 && correctCount === total) xp += 25;
+  if (daily) xp += 50;
+  return xp;
+}
+
+// Is today's daily challenge still available?
+export function dailyAvailable(learner) {
+  return (learner.dailyChallenge?.lastDate || null) !== dayKey();
+}
+
+// Level + progress toward the next level (200 XP per level).
+export function xpInfo(xp = 0) {
+  const into = xp % XP_PER_LEVEL;
+  return {
+    level: Math.floor(xp / XP_PER_LEVEL) + 1,
+    into,
+    span: XP_PER_LEVEL,
+    toNext: XP_PER_LEVEL - into,
+    pct: Math.round((into / XP_PER_LEVEL) * 100),
+  };
 }
 
 export function overallAccuracy(learner) {
