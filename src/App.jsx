@@ -4,6 +4,8 @@ import { freshLearner, chooseRound, applyResult, finishRound, ensureAllSkills, s
 import { setSoundEnabled } from './engine/sound.js';
 import Setup from './components/Setup.jsx';
 import Landing from './components/Landing.jsx';
+import SubjectNav from './components/SubjectNav.jsx';
+import English from './components/english/English.jsx';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
 import Summary from './components/Summary.jsx';
@@ -17,6 +19,7 @@ import { isFirebaseConfigured, onAuth, cloudLoad, cloudSave, logOut } from './en
 export default function App() {
   const [learner, setLearner] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [subject, setSubject] = useState('maths');    // platform subject: 'maths' | 'english'
   const [tab, setTab] = useState('train');           // 'train' | 'progress'
   const [screen, setScreen] = useState('home');       // 'home' | 'round' | 'summary' | 'topics'
   const [questions, setQuestions] = useState(null);
@@ -217,98 +220,109 @@ export default function App() {
     setTab('train');
   };
 
-  const wide = tab === 'progress' && pinUnlocked;
+  const wide = (subject === 'maths' && tab === 'progress' && pinUnlocked) || subject === 'english';
 
   return (
     <div className={`app${wide ? ' wide' : ''}`}>
-      {tab === 'train' && <Scene mood={mascotMood} />}
-      <div className="topbar">
-        <div className="brand">
-          <span className="mark">M</span>
-          <span className="name">Maths Trainer</span>
-        </div>
-        <div className="topbar-right">
-          <div className="tabs">
-            <button className={tab === 'train' ? 'active' : ''}
-              onClick={() => { setTab('train'); }}>Train</button>
-            <button className={tab === 'progress' ? 'active' : ''} onClick={goProgress}>Progress</button>
+      {subject === 'maths' && tab === 'train' && <Scene mood={mascotMood} />}
+
+      <SubjectNav
+        subject={subject}
+        onSubject={setSubject}
+        theme={theme}
+        onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+        onLogout={doLogout}
+        firebaseOn={isFirebaseConfigured}
+      />
+
+      {/* ---------- Maths Trainer (existing, unchanged behaviour) ---------- */}
+      {subject === 'maths' && (
+        <>
+          <div className="topbar maths-topbar">
+            <div className="brand">
+              <span className="mark">M</span>
+              <span className="name">Maths Trainer</span>
+            </div>
+            <div className="topbar-right">
+              <div className="tabs">
+                <button className={tab === 'train' ? 'active' : ''}
+                  onClick={() => { setTab('train'); }}>Train</button>
+                <button className={tab === 'progress' ? 'active' : ''} onClick={goProgress}>Progress</button>
+              </div>
+              {tab === 'train' && (
+                <button className="theme-btn" onClick={() => setSoundOn((s) => !s)}
+                  aria-label={soundOn ? 'Mute sound' : 'Turn sound on'}>
+                  {soundOn ? '🔊' : '🔇'}
+                </button>
+              )}
+            </div>
           </div>
-          {tab === 'train' && (
-            <button className="theme-btn" onClick={() => setSoundOn((s) => !s)}
-              aria-label={soundOn ? 'Mute sound' : 'Turn sound on'}>
-              {soundOn ? '🔊' : '🔇'}
-            </button>
+
+          {tab === 'train' && screen === 'home' && (
+            <Home
+              learner={learner}
+              onStart={() => startRound('adaptive')}
+              onWeak={() => startRound('weak')}
+              onQuickfire={() => startRound('quickfire')}
+              onTopics={() => setScreen('topics')}
+              onDaily={() => startRound('daily')}
+              onTopic={(id) => startRound('topic', id)}
+              dailyAvailable={dailyAvailable(learner)}
+            />
           )}
-          <button className="theme-btn" onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            aria-label={theme === 'dark' ? 'Switch to day mode' : 'Switch to night mode'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          {isFirebaseConfigured && (
-            <button className="theme-btn" onClick={doLogout} aria-label="Log out" title="Log out">🚪</button>
+
+          {tab === 'train' && screen === 'topics' && (
+            <TopicPicker
+              learner={learner}
+              onPick={(id) => startRound('topic', id)}
+              onCancel={() => setScreen('home')}
+            />
           )}
-        </div>
-      </div>
 
-      {tab === 'train' && screen === 'home' && (
-        <Home
-          learner={learner}
-          onStart={() => startRound('adaptive')}
-          onWeak={() => startRound('weak')}
-          onQuickfire={() => startRound('quickfire')}
-          onTopics={() => setScreen('topics')}
-          onDaily={() => startRound('daily')}
-          onTopic={(id) => startRound('topic', id)}
-          dailyAvailable={dailyAvailable(learner)}
-        />
+          {tab === 'train' && screen === 'round' && questions && (
+            <Round questions={questions} onResult={handleResult} onFinish={handleFinish}
+              onExit={goHome} onMood={setMascotMood} />
+          )}
+
+          {tab === 'train' && screen === 'summary' && (
+            <Summary
+              correct={lastCorrect}
+              total={lastTotal}
+              learner={learner}
+              daily={lastDaily}
+              onAgain={() => startRound(questions.mode === 'daily' ? 'adaptive' : questions.mode, questions.topicId)}
+              onHome={goHome}
+            />
+          )}
+
+          {tab === 'progress' && !pinUnlocked && (
+            <div className="center-wrap fade-in">
+              <div className="card setup" style={{ textAlign: 'center' }}>
+                <h1>Parent PIN</h1>
+                <p>Enter your 4-digit PIN to see progress.</p>
+                <Keypad value={pinEntry} onChange={(v) => { setPinEntry(v); setPinErr(''); }} onComplete={tryPin} />
+                <div className="err-msg">{pinErr}</div>
+                <button className="btn ghost" onClick={() => setTab('train')}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {tab === 'progress' && pinUnlocked && (
+            <Progress
+              learner={learner}
+              onReset={doReset}
+              onLogout={isFirebaseConfigured ? doLogout : null}
+              onSetLevel={(id, lvl) => setLearner((p) => setSkillLevel(p, id, lvl))}
+              onSetAll={(lvl) => setLearner((p) => setAllLevels(p, lvl))}
+              onSetExamDate={(d) => setLearner((p) => ({ ...p, examDate: d }))}
+              onPractise={practiseTopic}
+            />
+          )}
+        </>
       )}
 
-      {tab === 'train' && screen === 'topics' && (
-        <TopicPicker
-          learner={learner}
-          onPick={(id) => startRound('topic', id)}
-          onCancel={() => setScreen('home')}
-        />
-      )}
-
-      {tab === 'train' && screen === 'round' && questions && (
-        <Round questions={questions} onResult={handleResult} onFinish={handleFinish}
-          onExit={goHome} onMood={setMascotMood} />
-      )}
-
-      {tab === 'train' && screen === 'summary' && (
-        <Summary
-          correct={lastCorrect}
-          total={lastTotal}
-          learner={learner}
-          daily={lastDaily}
-          onAgain={() => startRound(questions.mode === 'daily' ? 'adaptive' : questions.mode, questions.topicId)}
-          onHome={goHome}
-        />
-      )}
-
-      {tab === 'progress' && !pinUnlocked && (
-        <div className="center-wrap fade-in">
-          <div className="card setup" style={{ textAlign: 'center' }}>
-            <h1>Parent PIN</h1>
-            <p>Enter your 4-digit PIN to see progress.</p>
-            <Keypad value={pinEntry} onChange={(v) => { setPinEntry(v); setPinErr(''); }} onComplete={tryPin} />
-            <div className="err-msg">{pinErr}</div>
-            <button className="btn ghost" onClick={() => setTab('train')}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {tab === 'progress' && pinUnlocked && (
-        <Progress
-          learner={learner}
-          onReset={doReset}
-          onLogout={isFirebaseConfigured ? doLogout : null}
-          onSetLevel={(id, lvl) => setLearner((p) => setSkillLevel(p, id, lvl))}
-          onSetAll={(lvl) => setLearner((p) => setAllLevels(p, lvl))}
-          onSetExamDate={(d) => setLearner((p) => ({ ...p, examDate: d }))}
-          onPractise={practiseTopic}
-        />
-      )}
+      {/* ---------- English Trainer (new, self-contained) ---------- */}
+      {subject === 'english' && <English studentName={learner.name} />}
     </div>
   );
 }

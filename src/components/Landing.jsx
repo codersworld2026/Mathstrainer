@@ -37,8 +37,8 @@ export default function Landing({ firebaseOn, authUser, theme, onToggleTheme, on
 
       <header className="topbar">
         <div className="brand">
-          <span className="mark">M</span>
-          <span className="name">Maths Trainer</span>
+          <span className="mark">S</span>
+          <span className="name">Study Trainer</span>
         </div>
         <div className="topbar-right">
           <button className="theme-btn" onClick={onToggleTheme}
@@ -65,24 +65,22 @@ export default function Landing({ firebaseOn, authUser, theme, onToggleTheme, on
             <span className="li li-purple">√</span>
           </div>
 
-          <div className="landing-badge">Year 7 · Last term revision</div>
-          <h1>Year 7 Maths Exam Prep</h1>
-          <p className="landing-lead">
-            Revise the key maths topics from the last term and get ready for your upcoming exam.
-          </p>
+          <div className="landing-badge">Maths • English • Science</div>
+          <h1>Study Trainer</h1>
+          <p className="landing-lead">Practise smarter, step by step.</p>
           <p className="landing-body">
-            Practise questions, build confidence, and track your progress as you prepare.
-            This trainer is designed to help Year 7 students strengthen their skills step by step.
+            One place to revise across subjects. Start with the Maths Trainer or the new
+            English Trainer — build confidence and track your progress as you go.
           </p>
 
           <ul className="landing-points">
-            <li className="lp-blue"><span className="lp-ico">📚</span>Covers last term’s topics</li>
-            <li className="lp-green"><span className="lp-ico">🎯</span>Adapts to your level</li>
-            <li className="lp-amber"><span className="lp-ico">📈</span>Tracks your progress</li>
+            <li className="lp-blue"><span className="lp-ico">➗</span>Maths Trainer</li>
+            <li className="lp-green"><span className="lp-ico">📖</span>English Trainer</li>
+            <li className="lp-amber"><span className="lp-ico">🔬</span>Science — coming soon</li>
           </ul>
 
           <button className="btn accent landing-cta" onClick={onStart}>🚀 Start Practising</button>
-          <p className="landing-hint">Start practising when you’re ready.</p>
+          <p className="landing-hint">Choose your subject after you sign in.</p>
         </div>
       </main>
     </div>

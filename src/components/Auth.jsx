@@ -90,8 +90,8 @@ export default function Auth({ onBack }) {
 
       <div className="topbar">
         <div className="brand">
-          <span className="mark">M</span>
-          <span className="name">Maths Trainer</span>
+          <span className="mark">S</span>
+          <span className="name">Study Trainer</span>
         </div>
       </div>
 
