@@ -3,6 +3,7 @@ import extracts from '../../data/twelfthNightExtracts.js';
 import { formatDuration, MONTHS } from '../../engine/stats.js';
 import {
   englishTotals, englishTodaySeconds, englishStreak, englishWeekly, englishCalendar,
+  englishExamTotals, examNextStep,
 } from '../../engine/english.js';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -40,7 +41,7 @@ function nextStep(t, total) {
   return 'Brilliant — he’s practised every question. Revisit the trickier ones to push for top marks.';
 }
 
-export default function EnglishProgress({ learner, onReset, onStart }) {
+export default function EnglishProgress({ learner, onReset, onStart, onStartExam }) {
   const [view, setView] = useState('activity');
   const [confirmReset, setConfirmReset] = useState(false);
   const now = new Date();
@@ -53,7 +54,9 @@ export default function EnglishProgress({ learner, onReset, onStart }) {
   const maxWeekSecs = Math.max(1, ...weeks.map((w) => w.seconds));
   const calWeeks = englishCalendar(learner, year, month);
   const streak = englishStreak(learner);
+  const ex = englishExamTotals(learner);
   const hasActivity = t.seconds > 0 || t.paragraphs > 0;
+  const recentExams = ((learner.english && learner.english.exams) || []).slice(-4).reverse();
 
   const stepMonth = (delta) => {
     const d = new Date(year, month + delta, 1);
@@ -79,6 +82,7 @@ export default function EnglishProgress({ learner, onReset, onStart }) {
       <div className="seg">
         <button className={view === 'activity' ? 'active' : ''} onClick={() => setView('activity')}>📊 Activity</button>
         <button className={view === 'writing' ? 'active' : ''} onClick={() => setView('writing')}>✍️ Writing</button>
+        <button className={view === 'exams' ? 'active' : ''} onClick={() => setView('exams')}>📝 Exams</button>
       </div>
 
       {view === 'activity' && (!hasActivity ? (
@@ -200,6 +204,48 @@ export default function EnglishProgress({ learner, onReset, onStart }) {
         </div>
       </>))}
 
+      {view === 'exams' && (ex.total === 0 ? (
+        <EmptyState
+          icon="📝"
+          title="No exam practice yet"
+          body="Once your child tries a Practice Exam or a Real Exam, their results will appear here."
+          cta="Start first practice exam"
+          onAction={onStartExam}
+        />
+      ) : (<>
+        <div className="card">
+          <SecHead icon="📝" title="Exam Power" sub="Practice and real exam attempts" />
+          <div className="stat-row" style={{ marginTop: 0 }}>
+            <div className="stat"><div className="v">{ex.practiceCount}</div><div className="l">Practice exams</div></div>
+            <div className="stat"><div className="v">{ex.realCount}</div><div className="l">Real exams</div></div>
+            <div className="stat"><div className="v">{ex.best}<span style={{ fontSize: 14, color: 'var(--eng-muted)' }}>/20</span></div><div className="l">Best score</div></div>
+          </div>
+          <div className="report-total">
+            Average score <strong>{ex.avg}/20</strong>.{' '}
+            <strong>Practice Exams</strong> show how your child writes <strong>with support</strong>;{' '}
+            <strong>Real Exam Mode</strong> shows how they write <strong>independently</strong>. The best score is their strongest attempt so far.
+          </div>
+        </div>
+
+        <div className="card next-step">
+          <SecHead icon="🎯" title="Next best step" sub="What to practise next" />
+          <p className="next-step-text">{examNextStep(ex)}</p>
+        </div>
+
+        <div className="card">
+          <SecHead icon="🗒" title="Recent exams" sub="His latest attempts" />
+          <ul className="exam-recent">
+            {recentExams.map((a, i) => (
+              <li key={i} className="exam-recent-row">
+                <span className={`er-mode ${a.mode}`}>{a.mode === 'real' ? '⏱ Real' : '📝 Practice'}</span>
+                <span className="er-title">{a.title || a.paperId}</span>
+                <span className="er-score">{a.score}/20</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </>))}
+
       <div className="dash-footer">
         <button className="btn ghost small danger" onClick={() => setConfirmReset(true)}>⚠ Reset English progress</button>
       </div>
@@ -209,7 +255,7 @@ export default function EnglishProgress({ learner, onReset, onStart }) {
           <div className="modal" onClick={(ev) => ev.stopPropagation()}>
             <div className="modal-ico">⚠️</div>
             <h2>Reset English progress?</h2>
-            <p>This will permanently delete his English writing time, paragraphs and scores. Maths progress is not affected.</p>
+            <p>This will permanently delete his English writing time, paragraphs, exam results and scores. Maths progress is not affected.</p>
             <div className="modal-actions">
               <button className="btn secondary" onClick={() => setConfirmReset(false)}>Cancel</button>
               <button className="btn danger-solid" onClick={() => { setConfirmReset(false); onReset(); }}>Yes, reset English</button>

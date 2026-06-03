@@ -83,6 +83,22 @@ export default function TwelfthNight({ onBack, onOpen }) {
         <button className="hub-btn" onClick={() => onOpen('symbolism')}><span>🔑</span>Symbolism</button>
         <button className="hub-btn" onClick={() => onOpen('extracts')}><span>📜</span>Extract Questions</button>
       </div>
+
+      <h2 className="eng-sec-title"><span className="eng-orn">✦</span>Exam zone<span className="eng-orn">✦</span></h2>
+      <div className="exam-zone">
+        <button className="exam-feature practice" onClick={() => onOpen('practice-exams')}>
+          <span className="ef-ico">📝</span>
+          <span className="ef-title">Practice Exams</span>
+          <span className="ef-sub">Practise Shakespeare questions with help.</span>
+          <span className="ef-btn">Start practice</span>
+        </button>
+        <button className="exam-feature real" onClick={() => onOpen('real-exam')}>
+          <span className="ef-ico">⏱️</span>
+          <span className="ef-title">Real Exam Mode</span>
+          <span className="ef-sub">Try a timed exam with no hints.</span>
+          <span className="ef-btn">Start exam</span>
+        </button>
+      </div>
     </div>
   );
 }

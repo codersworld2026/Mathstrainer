@@ -7,7 +7,7 @@ import Landing from './components/Landing.jsx';
 import SubjectNav from './components/SubjectNav.jsx';
 import English from './components/english/English.jsx';
 import EnglishProgress from './components/english/EnglishProgress.jsx';
-import { ensureEnglish, freshEnglish, recordPeel, addEnglishTime } from './engine/english.js';
+import { ensureEnglish, freshEnglish, recordPeel, recordExam, addEnglishTime } from './engine/english.js';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
 import Summary from './components/Summary.jsx';
@@ -28,6 +28,7 @@ export default function App() {
   const [lastCorrect, setLastCorrect] = useState(0);
   const [lastTotal, setLastTotal] = useState(ROUND_SIZE);
   const [lastDaily, setLastDaily] = useState(false); // did the last finished round count as the daily?
+  const [englishPage, setEnglishPage] = useState(null); // optional deep-link into an English page
   const [pinUnlocked, setPinUnlocked] = useState(false);
   const [pinEntry, setPinEntry] = useState('');
   const [pinErr, setPinErr] = useState('');
@@ -217,6 +218,7 @@ export default function App() {
 
   // English progress handlers (kept fully separate from maths state)
   const onPeelResult = (extractId, score) => setLearner((p) => recordPeel(p, extractId, score));
+  const onExamResult = (attempt) => setLearner((p) => recordExam(p, attempt));
   const doResetEnglish = () => setLearner((p) => ({ ...p, english: freshEnglish() }));
 
   // switch subject — land on its practise area, keep the other subject's state
@@ -353,7 +355,15 @@ export default function App() {
             </div>
           </div>
 
-          {tab === 'train' && <English studentName={learner.name} onPeelResult={onPeelResult} />}
+          {tab === 'train' && (
+            <English
+              studentName={learner.name}
+              onPeelResult={onPeelResult}
+              onExamResult={onExamResult}
+              initialPage={englishPage}
+              onConsumeInitial={() => setEnglishPage(null)}
+            />
+          )}
 
           {tab === 'progress' && !pinUnlocked && (
             <div className="center-wrap fade-in">
@@ -368,7 +378,12 @@ export default function App() {
           )}
 
           {tab === 'progress' && pinUnlocked && (
-            <EnglishProgress learner={learner} onReset={doResetEnglish} onStart={() => setTab('train')} />
+            <EnglishProgress
+              learner={learner}
+              onReset={doResetEnglish}
+              onStart={() => setTab('train')}
+              onStartExam={() => { setEnglishPage('practice-exams'); setTab('train'); }}
+            />
           )}
         </div>
       )}

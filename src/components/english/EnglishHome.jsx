@@ -109,6 +109,22 @@ export default function EnglishHome({ studentName, onOpen }) {
         <button className="btn small-cta" onClick={() => onOpen('peel')}>Try it now ✍️</button>
       </div>
 
+      <Flourish>Exam zone</Flourish>
+      <div className="exam-zone">
+        <button className="exam-feature practice" onClick={() => onOpen('practice-exams')}>
+          <span className="ef-ico">📝</span>
+          <span className="ef-title">Practice Exams</span>
+          <span className="ef-sub">Practise Shakespeare questions with help.</span>
+          <span className="ef-btn">Start practice</span>
+        </button>
+        <button className="exam-feature real" onClick={() => onOpen('real-exam')}>
+          <span className="ef-ico">⏱️</span>
+          <span className="ef-title">Real Exam Mode</span>
+          <span className="ef-sub">Try a timed exam with no hints.</span>
+          <span className="ef-btn">Start exam</span>
+        </button>
+      </div>
+
       <Flourish>Choose your next challenge</Flourish>
       <div className="eng-card-grid">
         {CARDS.map((c) => (

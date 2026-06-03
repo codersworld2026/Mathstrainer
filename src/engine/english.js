@@ -6,16 +6,18 @@ import { dayKey } from './adaptive.js';
 import { intensity } from './stats.js';
 
 export function freshEnglish() {
-  return { activity: {}, checks: 0, scoreSum: 0, best: 0, fullPeels: 0, byExtract: {} };
+  return { activity: {}, checks: 0, scoreSum: 0, best: 0, fullPeels: 0, byExtract: {}, exams: [] };
 }
 
-// Back-fill for accounts created before English existed. Safe to call on load.
+// Back-fill for accounts created before English (or exams) existed. Safe to
+// call on load — adds any missing fields without touching existing data.
 export function ensureEnglish(learner) {
   if (!learner) return learner;
   if (!learner.english) learner.english = freshEnglish();
   const e = learner.english;
   if (!e.activity) e.activity = {};
   if (!e.byExtract) e.byExtract = {};
+  if (!Array.isArray(e.exams)) e.exams = [];
   for (const k of ['checks', 'scoreSum', 'best', 'fullPeels']) if (typeof e[k] !== 'number') e[k] = 0;
   return learner;
 }
@@ -49,6 +51,29 @@ export function recordPeel(learner, extractId, score) {
   const cur = e.byExtract[k] || { checks: 0, best: 0 };
   e.byExtract[k] = { checks: cur.checks + 1, best: Math.max(cur.best, score) };
   bumpEngDay(e, { peels: 1, points: score });
+  return next;
+}
+
+// Record a completed exam attempt (practice or real). Returns a new learner.
+// Persists on the same learner doc under english.exams, so it syncs via the
+// existing cloudSave with no extra Firebase work. The answer is truncated to
+// keep the document small.
+export function recordExam(learner, attempt) {
+  const next = structuredClone(learner);
+  ensureEnglish(next);
+  const e = next.english;
+  e.exams.push({
+    paperId: attempt.paperId,
+    title: attempt.title || '',
+    mode: attempt.mode === 'real' ? 'real' : 'practice',
+    score: Math.max(0, Math.min(20, Math.round(attempt.score || 0))),
+    level: attempt.level || '',
+    answer: (attempt.answer || '').slice(0, 1500),
+    date: attempt.date || dayKey(),
+    timeSpent: attempt.timeSpent || 0,
+  });
+  // count the exam in today's writing activity too
+  bumpEngDay(e, { peels: 0, points: 0 });
   return next;
 }
 
@@ -128,4 +153,32 @@ export function englishCalendar(learner, year, month) {
   const weeks = [];
   for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
   return weeks;
+}
+
+// --- exam reporting (Practice Exams + Real Exam Mode) ---
+export function englishExamTotals(learner) {
+  const exams = (learner.english && learner.english.exams) || [];
+  const practice = exams.filter((x) => x.mode === 'practice');
+  const real = exams.filter((x) => x.mode === 'real');
+  const scores = exams.map((x) => x.score || 0);
+  const realScores = real.map((x) => x.score || 0);
+  return {
+    total: exams.length,
+    practiceCount: practice.length,
+    realCount: real.length,
+    best: scores.length ? Math.max(...scores) : 0,
+    bestReal: realScores.length ? Math.max(...realScores) : 0,
+    avg: scores.length ? Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 10) / 10 : 0,
+    last: exams.length ? exams[exams.length - 1] : null,
+  };
+}
+
+// Parent-friendly "what to practise next" line for the exam section.
+export function examNextStep(t) {
+  if (t.total === 0) return 'Start with a Practice Exam — it gives hints and sentence starters as he writes.';
+  if (t.realCount === 0) return 'He’s tried practising with help. Next, try a Real Exam to see how he writes on his own.';
+  if (t.best <= 5) return 'Keep using Practice Exams — focus on answering the question and adding one short quote.';
+  if (t.best <= 10) return 'He’s building skills. Practise explaining quotes with “this suggests…”.';
+  if (t.best <= 15) return 'He’s a confident writer. Push for a link back to the whole play to reach the top level.';
+  return 'Brilliant — he’s reaching strong answers. Try a Challenge paper without help to keep it up.';
 }

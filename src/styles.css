@@ -1213,3 +1213,132 @@ label.lbl { display: block; font-size: 13px; font-weight: 600; color: var(--mute
   .english-theme .flow-desc, .english-theme .flow-eg { flex-basis: 100%; }
   .english-theme .flow-arrow { transform: rotate(90deg); }
 }
+
+/* ============================================================
+   ENGLISH TRAINER · Exam zone (Practice Exams + Real Exam Mode)
+   Still scoped to .english-theme — Maths is untouched.
+   ============================================================ */
+
+/* exam feature cards on the landing + Twelfth Night hub */
+.english-theme .exam-zone { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.english-theme .exam-feature {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; cursor: pointer;
+  background: var(--parch); border: 1px solid var(--parch-edge); border-radius: 16px; padding: 18px; color: var(--eng-ink);
+  box-shadow: 0 1px 2px rgba(90,60,15,.05), 0 10px 22px rgba(90,60,15,.1);
+  border-top: 4px solid var(--gold); transition: transform .1s, box-shadow .12s;
+}
+.english-theme .exam-feature.real { border-top-color: var(--purple); }
+.english-theme .exam-feature:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(90,60,15,.16); }
+.english-theme .ef-ico { font-size: 26px; }
+.english-theme .ef-title { font-family: var(--eng-display); font-weight: 700; font-size: 17px; color: var(--navy); }
+.english-theme .ef-sub { font-size: 12.5px; color: var(--eng-muted); line-height: 1.4; }
+.english-theme .ef-btn {
+  margin-top: 8px; font-family: var(--eng-display); font-weight: 700; font-size: 13px; letter-spacing: .01em;
+  padding: 9px 16px; border-radius: 10px; background: linear-gradient(135deg, #c79324, #eabd4f); color: #2a1d05;
+}
+.english-theme .exam-feature.real .ef-btn { background: linear-gradient(135deg, #5b4b8a, #7a2e3a); color: #fff7e6; }
+
+/* paper list cards reuse .challenge-card; add a meta line */
+.english-theme .paper-meta { font-size: 12px; color: var(--eng-muted); margin: 0 0 12px; font-weight: 600; }
+.english-theme .real-paper { border-top: 3px solid var(--purple); }
+.english-theme .practice-paper { border-top: 3px solid var(--gold); }
+
+/* exam workspace */
+.english-theme .exam-work-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.english-theme .timer-toggle.on { color: var(--burgundy); border-color: var(--burgundy); }
+.english-theme .scroll-card { position: relative; border-left: 4px solid var(--gold); }
+.english-theme .question-scroll { border-left-color: var(--purple); background: linear-gradient(180deg, var(--parch-2), var(--parch)); }
+.english-theme .plan-prompts { margin: 0 0 12px; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; }
+.english-theme .plan-prompts li { font-size: 13.5px; color: var(--eng-muted); line-height: 1.45; }
+.english-theme .word-count { font-size: 12px; color: var(--eng-muted); margin-top: 6px; text-align: right; }
+.english-theme .exam-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+
+/* inline "check my answer" panel (the improve loop) */
+.english-theme .check-panel { margin-top: 14px; background: var(--gold-soft); border: 1px solid var(--parch-edge); border-radius: 12px; padding: 14px; }
+.english-theme .check-head { display: flex; align-items: baseline; gap: 10px; }
+.english-theme .check-score { font-family: var(--eng-display); font-weight: 700; font-size: 22px; color: var(--gold); }
+.english-theme .check-level { font-family: var(--eng-display); font-weight: 700; font-size: 14px; color: var(--navy); }
+.english-theme .check-tip { font-size: 12.5px; color: var(--eng-muted); margin-top: 6px; }
+
+/* help cards */
+.english-theme .help-card { background: linear-gradient(180deg, var(--parch-2), var(--parch)); }
+.english-theme .word-chip { cursor: pointer; background: var(--parch); border: 1px solid var(--parch-edge); color: var(--eng-ink);
+  border-radius: 999px; padding: 6px 12px; font-size: 12.5px; font-weight: 600; }
+.english-theme .word-chip:hover { border-color: var(--gold); }
+.english-theme .help-toggle { width: 100%; margin-top: 4px; }
+.english-theme .tips-card .exam-list { margin-bottom: 6px; }
+
+/* real exam bar + timer */
+.english-theme .exam-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: linear-gradient(135deg, #20304f, #5b4b8a); color: #fff7e6;
+  border-radius: 14px; padding: 12px 18px; margin-bottom: 14px; position: sticky; top: 8px; z-index: 5;
+  box-shadow: 0 8px 20px rgba(30,40,70,.35);
+}
+.english-theme .exam-bar.low { background: linear-gradient(135deg, #7a2e3a, #b3434f); }
+.english-theme .exam-bar-title { font-family: var(--eng-display); font-weight: 700; font-size: 14px; letter-spacing: .02em; }
+.english-theme .exam-timer { font-family: var(--mono); font-weight: 700; font-size: 22px; letter-spacing: .04em; }
+.english-theme .time-up-banner { background: var(--burgundy); color: #fff; text-align: center; font-weight: 700;
+  border-radius: 10px; padding: 10px; margin-bottom: 12px; font-size: 13.5px; }
+.english-theme .exam-answer { font-size: 15.5px; line-height: 1.6; }
+.english-theme .exam-answer-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.english-theme .exam-answer-foot .word-count { margin: 0; }
+.english-theme .exam-answer-foot .btn.small-cta { width: auto; }
+
+/* real exam setup */
+.english-theme .time-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.english-theme .time-option {
+  display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer;
+  background: var(--parch-2); border: 2px solid var(--parch-edge); border-radius: 12px; padding: 14px 8px; color: var(--eng-ink);
+}
+.english-theme .time-option.active { border-color: var(--purple); background: var(--parch); }
+.english-theme .to-mins { font-family: var(--eng-display); font-weight: 700; font-size: 16px; color: var(--navy); }
+.english-theme .to-sub { font-size: 11px; color: var(--eng-muted); }
+.english-theme .start-exam-cta { width: 100%; margin-top: 4px; background: linear-gradient(135deg, #20304f, #5b4b8a); }
+
+/* results page */
+.english-theme .exam-score-card { display: flex; align-items: center; gap: 18px; }
+.english-theme .score-ring {
+  flex: 0 0 auto; width: 108px; height: 108px; border-radius: 50%;
+  background: conic-gradient(#d39f28 calc(var(--pct) * 1%), var(--parch-2) 0);
+  display: grid; place-items: center;
+}
+.english-theme .score-ring-inner {
+  width: 82px; height: 82px; border-radius: 50%; background: var(--parch);
+  display: grid; place-items: center; line-height: 1;
+}
+.english-theme .score-num { font-family: var(--eng-display); font-weight: 700; font-size: 30px; color: var(--navy); }
+.english-theme .score-den { font-size: 12px; color: var(--eng-muted); }
+.english-theme .exam-level { font-family: var(--eng-display); font-weight: 700; font-size: 18px; color: var(--gold); margin-bottom: 4px; }
+.english-theme .exam-headline { font-size: 14px; color: var(--eng-ink); line-height: 1.5; }
+.english-theme .exam-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.english-theme .exam-list li { font-size: 13.5px; line-height: 1.45; color: var(--eng-ink); }
+.english-theme .exam-list.good li { color: var(--good-text); }
+.english-theme .exam-note { font-size: 13.5px; color: var(--eng-muted); }
+.english-theme .exam-checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.english-theme .exam-checklist li { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--eng-muted); }
+.english-theme .exam-checklist li.got { color: var(--eng-ink); }
+.english-theme .ck-mark { width: 22px; height: 22px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; background: var(--parch-2); color: var(--eng-muted); border: 1px solid var(--parch-edge); }
+.english-theme .exam-checklist li.got .ck-mark { background: var(--good-soft); color: var(--good-text); border-color: var(--good); }
+.english-theme .ck-label { flex: 1; }
+.english-theme .ck-pts { font-family: var(--mono); font-size: 12px; color: var(--eng-muted); }
+.english-theme .improved-card { background: linear-gradient(180deg, var(--gold-soft), var(--parch)); }
+.english-theme .improved-sentence { font-family: var(--eng-serif); font-style: italic; font-size: 17px; line-height: 1.45;
+  color: var(--navy); border-left: 3px solid var(--gold); padding-left: 14px; margin: 0; }
+.english-theme .exam-disclaimer { font-size: 11.5px; color: var(--eng-muted); text-align: center; margin: 14px 6px 0; line-height: 1.5; }
+.english-theme .exam-result-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 14px; }
+
+/* recent exams (parent dashboard) */
+.english-theme .exam-recent { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.english-theme .exam-recent-row { display: flex; align-items: center; gap: 10px; }
+.english-theme .er-mode { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; flex: 0 0 auto; }
+.english-theme .er-mode.practice { background: var(--gold-soft); color: var(--gold); }
+.english-theme .er-mode.real { background: rgba(91,75,138,.16); color: var(--purple); }
+.english-theme .er-title { flex: 1; min-width: 0; font-size: 13.5px; color: var(--eng-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.english-theme .er-score { font-family: var(--eng-display); font-weight: 700; font-size: 14px; color: var(--navy); }
+
+@media (max-width: 560px) {
+  .english-theme .exam-zone { grid-template-columns: 1fr; }
+  .english-theme .exam-score-card { flex-direction: column; text-align: center; }
+}
