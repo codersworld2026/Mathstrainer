@@ -63,7 +63,7 @@ function checkPeel({ point, evidence, explain, link }) {
   return { score, parts, message };
 }
 
-export default function PeelPractice({ onBack, initialExtractId = null }) {
+export default function PeelPractice({ onBack, initialExtractId = null, onScore }) {
   const startId = extracts.some((e) => e.id === initialExtractId) ? initialExtractId : extracts[0].id;
   const [extractId, setExtractId] = useState(startId);
   const ex = useMemo(() => extracts.find((e) => e.id === extractId) || extracts[0], [extractId]);
@@ -155,7 +155,7 @@ export default function PeelPractice({ onBack, initialExtractId = null }) {
 
         <div className="peel-actions">
           <button className="btn small-cta" onClick={buildParagraph}>🧩 Build my paragraph</button>
-          <button className="btn small-cta ghost-cta" onClick={() => setResult(checkPeel(peel))}>✅ Check my PEEL</button>
+          <button className="btn small-cta ghost-cta" onClick={() => { const res = checkPeel(peel); setResult(res); onScore && onScore(ex.id, res.score); }}>✅ Check my PEEL</button>
         </div>
       </div>
 

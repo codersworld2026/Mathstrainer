@@ -6,6 +6,8 @@ import Setup from './components/Setup.jsx';
 import Landing from './components/Landing.jsx';
 import SubjectNav from './components/SubjectNav.jsx';
 import English from './components/english/English.jsx';
+import EnglishProgress from './components/english/EnglishProgress.jsx';
+import { ensureEnglish, freshEnglish, recordPeel, addEnglishTime } from './engine/english.js';
 import Home from './components/Home.jsx';
 import Round from './components/Round.jsx';
 import Summary from './components/Summary.jsx';
@@ -49,7 +51,7 @@ export default function App() {
   useEffect(() => {
     if (!isFirebaseConfigured) {
       const s = load();
-      if (s && setupComplete(s)) setLearner(ensureAllSkills(s));
+      if (s && setupComplete(s)) setLearner(ensureEnglish(ensureAllSkills(s)));
       setLoaded(true);
       setAuthReady(true);
       return;
@@ -70,7 +72,7 @@ export default function App() {
     cloudLoad(authUser.uid)
       .then((doc) => {
         if (cancelled) return;
-        setLearner(doc && setupComplete(doc) ? ensureAllSkills(doc) : null);
+        setLearner(doc && setupComplete(doc) ? ensureEnglish(ensureAllSkills(doc)) : null);
         setLoaded(true);
       })
       .catch(() => { if (!cancelled) { setLearner(null); setLoaded(true); } });
@@ -106,6 +108,8 @@ export default function App() {
   // and there's been recent interaction (so idle / backgrounded time isn't counted).
   const tabRef = useRef(tab);
   tabRef.current = tab;
+  const subjectRef = useRef(subject);
+  subjectRef.current = subject;
   const ready = !!learner;
   useEffect(() => {
     if (!ready) return;
@@ -116,9 +120,10 @@ export default function App() {
     window.addEventListener('keydown', bump);
     const id = setInterval(() => {
       if (document.visibilityState !== 'visible') return;
-      if (tabRef.current !== 'train') return;
+      if (tabRef.current !== 'train') return; // 'train' tab = the practise area in either subject
       if (Date.now() - lastActive > IDLE_MS) return;
-      setLearner((prev) => (prev ? addActiveTime(prev, TICK) : prev));
+      const add = subjectRef.current === 'english' ? addEnglishTime : addActiveTime;
+      setLearner((prev) => (prev ? add(prev, TICK) : prev));
     }, TICK * 1000);
     return () => {
       clearInterval(id);
@@ -162,6 +167,7 @@ export default function App() {
         <Setup onDone={({ name, pin }) => {
           const base = freshLearner(name);
           base.pin = pin;
+          base.english = freshEnglish();
           setLearner(base);
           if (isFirebaseConfigured && authUser) cloudSave(authUser.uid, base);
         }} />
@@ -209,11 +215,20 @@ export default function App() {
     else { setPinErr('Wrong PIN'); setPinEntry(''); }
   };
 
-  // Confirmed by the modal in Progress before this runs.
+  // English progress handlers (kept fully separate from maths state)
+  const onPeelResult = (extractId, score) => setLearner((p) => recordPeel(p, extractId, score));
+  const doResetEnglish = () => setLearner((p) => ({ ...p, english: freshEnglish() }));
+
+  // switch subject — land on its practise area, keep the other subject's state
+  const switchSubject = (s) => { setSubject(s); setTab('train'); };
+
+  // Confirmed by the modal in Progress before this runs. Resets maths only —
+  // English progress is preserved.
   const doReset = () => {
     resetStore();
     const base = freshLearner(learner.name);
     base.pin = learner.pin;
+    base.english = learner.english || freshEnglish();
     setLearner(base);
     if (isFirebaseConfigured && authUser) cloudSave(authUser.uid, base);
     setScreen('home');
@@ -228,7 +243,7 @@ export default function App() {
 
       <SubjectNav
         subject={subject}
-        onSubject={setSubject}
+        onSubject={switchSubject}
         theme={theme}
         onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
         onLogout={doLogout}
@@ -322,7 +337,41 @@ export default function App() {
       )}
 
       {/* ---------- English Trainer (new, self-contained) ---------- */}
-      {subject === 'english' && <English studentName={learner.name} />}
+      {subject === 'english' && (
+        <>
+          <div className="topbar maths-topbar">
+            <div className="brand">
+              <span className="mark">E</span>
+              <span className="name">English Trainer</span>
+            </div>
+            <div className="topbar-right">
+              <div className="tabs">
+                <button className={tab === 'train' ? 'active' : ''}
+                  onClick={() => { setTab('train'); }}>Practise</button>
+                <button className={tab === 'progress' ? 'active' : ''} onClick={goProgress}>Progress</button>
+              </div>
+            </div>
+          </div>
+
+          {tab === 'train' && <English studentName={learner.name} onPeelResult={onPeelResult} />}
+
+          {tab === 'progress' && !pinUnlocked && (
+            <div className="center-wrap fade-in">
+              <div className="card setup" style={{ textAlign: 'center' }}>
+                <h1>Parent PIN</h1>
+                <p>Enter your 4-digit PIN to see progress.</p>
+                <Keypad value={pinEntry} onChange={(v) => { setPinEntry(v); setPinErr(''); }} onComplete={tryPin} />
+                <div className="err-msg">{pinErr}</div>
+                <button className="btn ghost" onClick={() => setTab('train')}>Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {tab === 'progress' && pinUnlocked && (
+            <EnglishProgress learner={learner} onReset={doResetEnglish} />
+          )}
+        </>
+      )}
     </div>
   );
 }

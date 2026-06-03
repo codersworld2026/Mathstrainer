@@ -9,7 +9,7 @@ import ExtractQuestions from './ExtractQuestions.jsx';
 // English Trainer area. Self-contained, state-driven navigation (the app has no
 // router) — page keys mirror the /english/* routes. Holds no maths data/state.
 //   home · peel · twelfth · characters · symbolism · extracts
-export default function English({ studentName = 'there' }) {
+export default function English({ studentName = 'there', onPeelResult }) {
   const [page, setPage] = useState('home');
   const [peelExtractId, setPeelExtractId] = useState(null);
   const [peelBack, setPeelBack] = useState('home');
@@ -28,7 +28,7 @@ export default function English({ studentName = 'there' }) {
 
   switch (page) {
     case 'peel':
-      return <PeelPractice initialExtractId={peelExtractId} onBack={() => setPage(peelBack)} />;
+      return <PeelPractice initialExtractId={peelExtractId} onBack={() => setPage(peelBack)} onScore={onPeelResult} />;
     case 'twelfth':
       return <TwelfthNight onBack={home} onOpen={(key) => (key === 'peel' ? openPeel(null, 'twelfth') : setPage(key))} />;
     case 'characters':
