@@ -892,3 +892,324 @@ label.lbl { display: block; font-size: 13px; font-weight: 600; color: var(--mute
 .modal-actions .btn { font-size: 15px; padding: 14px; }
 .btn.danger-solid { background: var(--bad); color: #fff; }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ============================================================
+   ENGLISH TRAINER · Shakespeare / theatre theme
+   Everything below is additive and scoped to .english-theme, so the
+   Maths Trainer is never affected. Parchment cards, gold + theatre
+   accents, a dramatic serif (Cinzel) for headings, clean body text.
+   ============================================================ */
+.english-theme {
+  --eng-display: "Cinzel", var(--display);
+  --eng-serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --parch: #fff7e6;
+  --parch-2: #fbeed0;
+  --parch-edge: #e7d6ab;
+  --gold: #a9781a;          /* readable gold for text/icons */
+  --gold-soft: #f6e6bb;
+  --navy: #20304f;
+  --purple: #5b4b8a;
+  --burgundy: #7a2e3a;
+  --eng-ink: #2c2333;
+  --eng-muted: #6f6450;
+  color: var(--eng-ink);
+}
+:root[data-theme="dark"] .english-theme {
+  --parch: #221b2f;
+  --parch-2: #2b2139;
+  --parch-edge: #3e3456;
+  --gold: #e8c061;
+  --gold-soft: #463a20;
+  --navy: #cdd6ee;
+  --purple: #bcaceb;
+  --burgundy: #f1a3b1;
+  --eng-ink: #f1e9da;
+  --eng-muted: #b6ab95;
+}
+
+/* parchment cards everywhere in the English area */
+.english-theme .card {
+  background: var(--parch);
+  border: 1px solid var(--parch-edge);
+  box-shadow: 0 1px 2px rgba(90,60,15,.06), 0 12px 28px rgba(90,60,15,.10);
+  color: var(--eng-ink);
+}
+:root[data-theme="dark"] .english-theme .card {
+  box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px rgba(0,0,0,.5);
+}
+
+/* English topbar mark goes gold (the "E") */
+.english-theme .maths-topbar .brand .mark {
+  background: linear-gradient(135deg, #c79324, #efc25a);
+  color: #2a1d05;
+  box-shadow: 0 4px 12px rgba(170,120,20,.4);
+}
+.english-theme .maths-topbar .brand .name { font-family: var(--eng-display); letter-spacing: .01em; }
+
+/* small reusable kicker label */
+.english-theme .eng-kicker {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--eng-display); font-weight: 700; font-size: 13px; letter-spacing: .03em;
+  color: var(--gold); text-transform: uppercase; margin-bottom: 10px;
+}
+.english-theme .eng-kicker.centered { display: flex; justify-content: center; }
+.english-theme .eng-how-sub { text-align: center; font-size: 13.5px; color: var(--eng-muted); margin: -4px 0 16px; }
+
+/* decorative section heading with gold flourishes */
+.english-theme .eng-sec-title {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-family: var(--eng-display); font-weight: 700; font-size: 21px; letter-spacing: .02em;
+  color: var(--navy); text-align: center; margin: 22px 0 14px;
+}
+.english-theme .eng-orn { color: var(--gold); font-size: 14px; opacity: .85; }
+
+/* ---- hero (stage spotlight) ---- */
+.english-theme .eng-hero {
+  text-align: center; position: relative; overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 50% -25%, var(--parch-2), var(--parch) 70%);
+  border: 1px solid var(--parch-edge);
+  border-top: 4px solid transparent;
+  border-image: linear-gradient(90deg, #c79324, #efc25a, #c79324) 1;
+}
+.english-theme .eng-badge {
+  display: inline-block; background: var(--gold-soft); color: var(--gold);
+  border: 1px solid var(--parch-edge);
+  font-family: var(--eng-display); font-weight: 700; font-size: 11.5px; letter-spacing: .04em;
+  padding: 6px 14px; border-radius: 999px; margin-bottom: 12px; text-transform: uppercase;
+}
+.english-theme .eng-title {
+  font-family: var(--eng-display); font-weight: 700; font-size: 30px; line-height: 1.12;
+  letter-spacing: .01em; color: var(--navy); margin-bottom: 8px;
+}
+.english-theme .eng-hero-sub { color: var(--eng-muted); font-size: 15px; line-height: 1.55; max-width: 48ch; margin: 0 auto; }
+.english-theme .eng-hero-sub em { font-family: var(--eng-serif); font-style: italic; font-size: 1.08em; color: var(--eng-ink); }
+.english-theme .eng-hero-cta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 16px; }
+.english-theme .btn.eng-cta {
+  width: auto; font-family: var(--eng-display); font-weight: 700; font-size: 15px; letter-spacing: .01em;
+  padding: 13px 22px; border-radius: 12px;
+  background: linear-gradient(135deg, #5b4b8a, #7a2e3a); color: #fff7e6;
+  box-shadow: 0 8px 20px rgba(90,40,70,.32);
+}
+.english-theme .btn.eng-cta.ghost {
+  background: transparent; color: var(--gold); border: 1.5px solid var(--gold); box-shadow: none;
+}
+
+/* ---- gold primary CTA used across English ---- */
+.english-theme .btn.small-cta {
+  background: linear-gradient(135deg, #c79324, #eabd4f); color: #2a1d05;
+  box-shadow: 0 6px 16px rgba(170,120,20,.30); font-family: var(--eng-display); letter-spacing: .01em;
+}
+.english-theme .btn.small-cta.ghost-cta {
+  background: transparent; color: var(--gold); border: 1.5px solid var(--gold); box-shadow: none;
+}
+
+/* ---- two-up rows (mission + quote, character/theme chips) ---- */
+.english-theme .eng-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.english-theme .eng-duo > .card { margin-top: 0; }
+.english-theme .eng-mission-text { font-size: 15px; line-height: 1.5; margin-bottom: 14px; color: var(--eng-ink); }
+.english-theme .eng-quote-card { background: linear-gradient(180deg, var(--parch-2), var(--parch)); }
+.english-theme .eng-quote {
+  font-family: var(--eng-serif); font-style: italic; font-size: 19px; line-height: 1.4;
+  color: var(--navy); border-left: 3px solid var(--gold); padding-left: 14px; margin: 0;
+}
+.english-theme .eng-quote-by { font-family: var(--eng-display); font-size: 12.5px; color: var(--gold); margin-top: 10px; text-align: right; }
+
+/* ---- How PEEL works flow ---- */
+.english-theme .eng-peel-how { text-align: center; }
+.english-theme .peel-flow { display: flex; align-items: stretch; gap: 8px; margin-bottom: 16px; }
+.english-theme .flow-step {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--parch-2); border: 1px solid var(--parch-edge); border-radius: 14px; padding: 14px 8px;
+}
+.english-theme .flow-badge {
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  font-family: var(--eng-display); font-weight: 700; font-size: 15px; color: #fff7e6;
+  background: linear-gradient(135deg, #5b4b8a, #7a2e3a);
+}
+.english-theme .flow-icon { font-size: 19px; }
+.english-theme .flow-name { font-family: var(--eng-display); font-weight: 700; font-size: 14px; color: var(--navy); }
+.english-theme .flow-desc { font-size: 12px; color: var(--eng-muted); line-height: 1.35; }
+.english-theme .flow-eg { font-family: var(--eng-serif); font-style: italic; font-size: 12.5px; color: var(--eng-ink); margin-top: 2px; }
+.english-theme .flow-arrow { align-self: center; color: var(--gold); font-size: 18px; flex: 0 0 auto; }
+
+/* ---- learning cards (Choose your next challenge) ---- */
+.english-theme .eng-card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.english-theme .eng-card {
+  display: flex; align-items: center; gap: 12px; text-align: left; cursor: pointer;
+  background: var(--parch); border: 1px solid var(--parch-edge); border-left: 4px solid var(--gold);
+  border-radius: 14px; padding: 15px; color: var(--eng-ink);
+  box-shadow: 0 1px 2px rgba(90,60,15,.05), 0 8px 18px rgba(90,60,15,.08);
+  transition: transform .1s, box-shadow .12s, border-color .12s;
+}
+.english-theme .eng-card:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(90,60,15,.16); }
+.english-theme .eng-ico { font-size: 24px; flex: 0 0 auto; }
+.english-theme .eng-card-title { font-family: var(--eng-display); font-weight: 700; font-size: 15px; color: var(--navy); }
+.english-theme .eng-card-sub { font-size: 12px; color: var(--eng-muted); margin-top: 2px; line-height: 1.35; }
+
+/* ---- Writing stars strip ---- */
+.english-theme .eng-stars { text-align: center; }
+.english-theme .stars-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.english-theme .star-goal {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: var(--eng-ink);
+  background: var(--gold-soft); border: 1px solid var(--parch-edge); border-radius: 999px; padding: 7px 14px;
+}
+.english-theme .star-ico { font-size: 14px; }
+
+/* ---- Shakespeare toolkit ---- */
+.english-theme .toolkit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.english-theme .toolkit-card {
+  display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; cursor: pointer;
+  background: var(--parch); border: 1px solid var(--parch-edge); border-radius: 14px; padding: 16px 10px; color: var(--eng-ink);
+  transition: transform .1s, border-color .12s;
+}
+.english-theme .toolkit-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+.english-theme .tk-ico { font-size: 22px; color: var(--gold); }
+.english-theme .tk-title { font-family: var(--eng-display); font-weight: 700; font-size: 13.5px; color: var(--navy); }
+.english-theme .tk-sub { font-size: 11px; color: var(--eng-muted); line-height: 1.3; }
+
+/* ---- Twelfth Night play guide ---- */
+.english-theme .story-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; }
+.english-theme .story-beat { display: flex; gap: 12px; align-items: flex-start; }
+.english-theme .beat-ico {
+  flex: 0 0 auto; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 18px;
+  background: var(--parch-2); border: 1px solid var(--parch-edge);
+}
+.english-theme .beat-text { font-size: 14.5px; line-height: 1.5; color: var(--eng-ink); padding-top: 6px; }
+.english-theme .quote-list { list-style: none; display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; }
+.english-theme .famous-quote { border-left: 3px solid var(--gold); padding-left: 14px; }
+.english-theme .fq-text { display: block; font-family: var(--eng-serif); font-style: italic; font-size: 18px; line-height: 1.4; color: var(--navy); }
+.english-theme .fq-by { display: block; font-family: var(--eng-display); font-size: 12px; color: var(--gold); margin-top: 3px; }
+.english-theme .trait-chip.clickable { cursor: pointer; font-family: var(--body); }
+.english-theme .trait-chip.clickable:hover { border-color: var(--gold); color: var(--eng-ink); }
+
+/* ---- shared detail/section text colours on parchment ---- */
+.english-theme .dc-title { font-family: var(--eng-display); font-weight: 700; color: var(--navy); }
+.english-theme .dc-desc { color: var(--eng-muted); }
+.english-theme .dc-role { color: var(--eng-ink); }
+.english-theme .dc-label { color: var(--gold); }
+.english-theme .trait-chip { background: var(--gold-soft); border-color: var(--parch-edge); color: var(--eng-ink); }
+.english-theme .ref-quote { font-family: var(--eng-serif); font-style: italic; font-size: 15px; color: var(--eng-ink); border-left-color: var(--gold); }
+.english-theme .peel-starter { font-family: var(--eng-serif); font-style: italic; font-size: 15px; color: var(--eng-ink); background: var(--gold-soft); }
+
+/* accent variety for profile / theme cards */
+.english-theme .accent-0 { --acc: var(--navy); }
+.english-theme .accent-1 { --acc: var(--purple); }
+.english-theme .accent-2 { --acc: var(--burgundy); }
+.english-theme .accent-3 { --acc: var(--gold); }
+
+.english-theme .profile-card, .english-theme .theme-card { border-top: 3px solid var(--acc); }
+.english-theme .profile-head, .english-theme .theme-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.english-theme .profile-avatar, .english-theme .theme-badge {
+  flex: 0 0 auto; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 24px;
+  background: var(--parch-2); border: 2px solid var(--acc);
+}
+.english-theme .profile-card .dc-title, .english-theme .theme-card .dc-title { color: var(--acc); margin: 0; }
+.english-theme .profile-tag { font-size: 11.5px; font-weight: 700; color: var(--eng-muted); text-transform: uppercase; letter-spacing: .04em; }
+
+/* ---- Extract challenge cards ---- */
+.english-theme .challenge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.english-theme .challenge-card { display: flex; flex-direction: column; }
+.english-theme .ch-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.english-theme .ch-num { font-family: var(--eng-display); font-weight: 700; font-size: 12px; color: var(--gold); text-transform: uppercase; letter-spacing: .05em; }
+.english-theme .ch-diff { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 4px 10px; border-radius: 999px; border: 1px solid transparent; }
+.english-theme .ch-diff.starter { background: var(--good-soft); color: var(--good-text); border-color: var(--good); }
+.english-theme .ch-diff.growing { background: var(--gold-soft); color: var(--gold); border-color: var(--parch-edge); }
+.english-theme .ch-diff.challenge { background: rgba(122,46,58,.12); color: var(--burgundy); border-color: var(--burgundy); }
+.english-theme .ch-title { font-family: var(--eng-display); font-weight: 700; font-size: 16px; color: var(--navy); line-height: 1.25; margin-bottom: 8px; }
+.english-theme .ch-question { font-size: 13px; color: var(--eng-muted); line-height: 1.45; margin: 0 0 14px; }
+.english-theme .challenge-card .eq-extract { font-family: var(--eng-serif); font-style: italic; font-size: 16px; color: var(--eng-ink); border-left-color: var(--gold); }
+.english-theme .challenge-card .btn.small-cta { align-self: flex-start; margin-top: auto; }
+
+/* ---- PEEL builder on parchment ---- */
+.english-theme .ex-tag { background: var(--gold-soft); color: var(--eng-muted); }
+.english-theme .ex-tag.theme { background: rgba(91,75,138,.16); color: var(--purple); }
+.english-theme .ex-text { font-family: var(--eng-serif); font-size: 22px; color: var(--eng-ink); border-left-color: var(--gold); }
+.english-theme .pq-text { font-family: var(--eng-display); font-weight: 600; font-size: 16px; color: var(--navy); line-height: 1.4; }
+.english-theme .pq-label { color: var(--gold); }
+.english-theme .peel-h { font-family: var(--eng-display); font-weight: 700; font-size: 18px; color: var(--navy); }
+.english-theme .peel-help { color: var(--eng-muted); }
+.english-theme .peel-label { font-family: var(--eng-display); font-weight: 700; color: var(--eng-ink); }
+.english-theme .peel-step-ico { font-size: 14px; }
+.english-theme .pick-chip { background: var(--parch-2); border-color: var(--parch-edge); color: var(--eng-muted); }
+.english-theme .pick-chip.active { background: linear-gradient(135deg, #5b4b8a, #7a2e3a); color: #fff7e6; border-color: transparent; }
+.english-theme .pp-step { background: var(--parch-2); border-color: var(--parch-edge); color: var(--eng-muted); }
+.english-theme .peel-area { background: #fffdf6; border-color: var(--parch-edge); color: var(--eng-ink); font-family: var(--body); }
+.english-theme .peel-area:focus { border-color: var(--gold); box-shadow: 0 0 0 4px var(--gold-soft); }
+:root[data-theme="dark"] .english-theme .peel-area { background: #1b1526; }
+.english-theme .quote-chip { background: var(--gold-soft); border-color: var(--gold); color: var(--gold); }
+.english-theme .starter-chip { background: var(--parch-2); border-color: var(--parch-edge); color: var(--eng-muted); }
+.english-theme .qr-label { color: var(--eng-muted); }
+.english-theme .score-line { font-family: var(--eng-display); color: var(--navy); }
+.english-theme .score-line b { color: var(--gold); }
+.english-theme .peel-feedback { background: var(--gold-soft); color: var(--eng-ink); }
+.english-theme .built-text { font-size: 16px; }
+
+/* ---- Parent progress (warm, comfortable reading column) ---- */
+.english-theme .progress-dash { max-width: 820px; margin: 0 auto; }
+.english-theme .dash-header {
+  background: linear-gradient(135deg, var(--gold-soft), var(--parch));
+  border: 1px solid var(--parch-edge); border-top: 4px solid transparent;
+  border-image: linear-gradient(90deg, #c79324, #efc25a, #c79324) 1;
+}
+.english-theme .dash-head-text h1 { font-family: var(--eng-display); font-weight: 700; font-size: 22px; color: var(--navy); letter-spacing: .01em; }
+.english-theme .dash-sub { color: var(--eng-muted); }
+.english-theme .dash-emblem { color: var(--gold); opacity: .3; }
+.english-theme .parent-note { background: var(--parch-2); border: 1px solid var(--parch-edge); color: var(--eng-muted); font-size: 13px; line-height: 1.55; }
+.english-theme .seg { background: var(--parch-2); }
+.english-theme .seg button { color: var(--eng-muted); }
+.english-theme .seg button.active { background: var(--parch); color: var(--navy); }
+:root[data-theme="dark"] .english-theme .seg button.active { background: linear-gradient(135deg, #5b4b8a, #7a2e3a); color: #fff7e6; }
+.english-theme .sec-ico { background: var(--gold-soft); color: var(--gold); font-family: var(--eng-display); }
+.english-theme .sec-title { font-family: var(--eng-display); font-weight: 700; color: var(--navy); }
+.english-theme .sec-sub { color: var(--eng-muted); }
+.english-theme .stat .v { color: var(--navy); }
+.english-theme .stat .l { color: var(--eng-muted); }
+.english-theme .report-total { color: var(--eng-muted); }
+.english-theme .report-total strong { color: var(--eng-ink); }
+.english-theme .skill-name { color: var(--eng-ink); }
+.english-theme .pct { color: var(--eng-muted); }
+.english-theme .bar { background: var(--parch-2); }
+.english-theme .bar span { background: linear-gradient(90deg, #c79324, #eabd4f); }
+.english-theme .bar.untouched span { background: var(--parch-edge); }
+.english-theme .next-step { background: linear-gradient(180deg, var(--gold-soft), var(--parch)); border-color: var(--parch-edge); }
+.english-theme .next-step-text { font-size: 14.5px; line-height: 1.55; color: var(--eng-ink); }
+.english-theme .eq-checks { color: var(--eng-muted); }
+.english-theme .stat { background: var(--parch-2); border-color: var(--parch-edge); }
+.english-theme .step-btn { color: var(--eng-muted); border-color: var(--parch-edge); }
+.english-theme .step-btn:hover:not(:disabled) { color: var(--navy); border-color: var(--navy); }
+.english-theme .cal-title { font-family: var(--eng-display); font-weight: 700; color: var(--navy); }
+.english-theme .cal-wd { color: var(--eng-muted); }
+.english-theme .cal-legend { color: var(--eng-muted); }
+.english-theme .week-bar { background: var(--parch-2); }
+.english-theme .week-bar > span { background: linear-gradient(90deg, #c79324, #eabd4f); }
+/* gold "darker = more minutes" heatmap, on theme */
+.english-theme .cal-cell { color: var(--eng-muted); }
+.english-theme .cal-cell.lvl-0 { background: var(--parch-2); color: var(--eng-muted); }
+.english-theme .cal-cell.lvl-1 { background: #f6e2a6; color: #6b4e12; }
+.english-theme .cal-cell.lvl-2 { background: #ecc65d; color: #5a4310; }
+.english-theme .cal-cell.lvl-3 { background: #d39f28; color: #fff; }
+.english-theme .cal-cell.lvl-4 { background: #a9781a; color: #fff; }
+
+/* friendly empty states */
+.english-theme .eng-empty { text-align: center; padding: 30px 22px; }
+.english-theme .empty-ico { font-size: 38px; display: block; margin-bottom: 8px; }
+.english-theme .empty-title { font-family: var(--eng-display); font-weight: 700; font-size: 18px; color: var(--navy); margin-bottom: 6px; }
+.english-theme .empty-body { font-size: 13.5px; color: var(--eng-muted); line-height: 1.55; max-width: 42ch; margin: 0 auto 16px; }
+.english-theme .eng-empty .btn.small-cta { display: inline-flex; }
+
+/* ---- responsive ---- */
+@media (max-width: 640px) {
+  .english-theme .toolkit-grid { grid-template-columns: repeat(2, 1fr); }
+  .english-theme .challenge-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .english-theme .eng-duo { grid-template-columns: 1fr; }
+  .english-theme .eng-card-grid { grid-template-columns: 1fr; }
+  .english-theme .eng-title { font-size: 25px; }
+  .english-theme .peel-flow { flex-direction: column; }
+  .english-theme .flow-step { flex-direction: row; flex-wrap: wrap; text-align: left; align-items: center; gap: 8px; }
+  .english-theme .flow-step .flow-name { flex: 1; }
+  .english-theme .flow-desc, .english-theme .flow-eg { flex-basis: 100%; }
+  .english-theme .flow-arrow { transform: rotate(90deg); }
+}

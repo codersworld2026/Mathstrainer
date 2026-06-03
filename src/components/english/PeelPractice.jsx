@@ -35,6 +35,7 @@ const STARTERS = {
 };
 
 const STEP_LABELS = { point: 'Point', evidence: 'Evidence', explain: 'Explain', link: 'Link' };
+const STEP_ICONS = { point: '🎯', evidence: '🔍', explain: '💭', link: '🔗' };
 const wc = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 const hasQuote = (s) => /["“”]/.test(s);
 
@@ -96,7 +97,8 @@ export default function PeelPractice({ onBack, initialExtractId = null, onScore 
   const Box = (k) => (
     <div className="peel-box">
       <label className="peel-label">
-        <span className={`peel-dot ${live[k] ? 'on' : ''}`} />{STEP_LABELS[k]}
+        <span className={`peel-dot ${live[k] ? 'on' : ''}`} />
+        <span className="peel-step-ico" aria-hidden="true">{STEP_ICONS[k]}</span>{STEP_LABELS[k]}
       </label>
       <textarea className="peel-area" rows={k === 'point' || k === 'link' ? 2 : 3}
         placeholder={`Write your ${STEP_LABELS[k].toLowerCase()} here…`}
@@ -140,7 +142,7 @@ export default function PeelPractice({ onBack, initialExtractId = null, onScore 
       <div className="card peel-progress">
         {['point', 'evidence', 'explain', 'link'].map((k) => (
           <div key={k} className={`pp-step ${live[k] ? 'done' : ''}`}>
-            <span className="pp-mark">{live[k] ? '✓' : '•'}</span>{STEP_LABELS[k]}
+            <span className="pp-mark">{live[k] ? '✓' : STEP_ICONS[k]}</span>{STEP_LABELS[k]}
           </div>
         ))}
       </div>

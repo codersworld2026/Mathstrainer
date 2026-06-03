@@ -338,7 +338,7 @@ export default function App() {
 
       {/* ---------- English Trainer (new, self-contained) ---------- */}
       {subject === 'english' && (
-        <>
+        <div className="english-theme">
           <div className="topbar maths-topbar">
             <div className="brand">
               <span className="mark">E</span>
@@ -368,9 +368,9 @@ export default function App() {
           )}
 
           {tab === 'progress' && pinUnlocked && (
-            <EnglishProgress learner={learner} onReset={doResetEnglish} />
+            <EnglishProgress learner={learner} onReset={doResetEnglish} onStart={() => setTab('train')} />
           )}
-        </>
+        </div>
       )}
     </div>
   );

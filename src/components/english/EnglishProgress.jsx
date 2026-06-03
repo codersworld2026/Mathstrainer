@@ -20,7 +20,27 @@ function SecHead({ icon, title, sub }) {
   );
 }
 
-export default function EnglishProgress({ learner, onReset }) {
+// A warm, non-clinical empty state with a single clear action.
+function EmptyState({ icon, title, body, cta, onAction }) {
+  return (
+    <div className="card eng-empty">
+      <span className="empty-ico">{icon}</span>
+      <h3 className="empty-title">{title}</h3>
+      <p className="empty-body">{body}</p>
+      {cta && <button className="btn small-cta" onClick={onAction}>{cta}</button>}
+    </div>
+  );
+}
+
+// Friendly, plain-English recommendation for what to try next.
+function nextStep(t, total) {
+  if (t.paragraphs === 0) return 'Help him write his very first PEEL paragraph — even a short one is a great start.';
+  if (t.fullPeels === 0) return 'He’s writing well. Encourage him to aim for a full 4/4 by adding a clear link back to the question.';
+  if (t.extractsPractised < total) return `He’s got the basics — try one of the ${total - t.extractsPractised} questions he hasn’t practised yet.`;
+  return 'Brilliant — he’s practised every question. Revisit the trickier ones to push for top marks.';
+}
+
+export default function EnglishProgress({ learner, onReset, onStart }) {
   const [view, setView] = useState('activity');
   const [confirmReset, setConfirmReset] = useState(false);
   const now = new Date();
@@ -33,6 +53,7 @@ export default function EnglishProgress({ learner, onReset }) {
   const maxWeekSecs = Math.max(1, ...weeks.map((w) => w.seconds));
   const calWeeks = englishCalendar(learner, year, month);
   const streak = englishStreak(learner);
+  const hasActivity = t.seconds > 0 || t.paragraphs > 0;
 
   const stepMonth = (delta) => {
     const d = new Date(year, month + delta, 1);
@@ -44,18 +65,31 @@ export default function EnglishProgress({ learner, onReset }) {
     <div className="fade-in progress-dash">
       <header className="dash-header">
         <div className="dash-head-text">
-          <h1>{learner.name}’s English progress</h1>
+          <h1>How {learner.name} is doing in English</h1>
           <p className="dash-sub">Parent dashboard · Twelfth Night writing</p>
         </div>
         <span className="dash-emblem" aria-hidden="true">📖</span>
       </header>
+
+      <div className="parent-note">
+        A friendly look at his English writing — how often he practises and how his PEEL paragraphs are
+        coming along. This is completely separate from his maths progress.
+      </div>
 
       <div className="seg">
         <button className={view === 'activity' ? 'active' : ''} onClick={() => setView('activity')}>📊 Activity</button>
         <button className={view === 'writing' ? 'active' : ''} onClick={() => setView('writing')}>✍️ Writing</button>
       </div>
 
-      {view === 'activity' && (<>
+      {view === 'activity' && (!hasActivity ? (
+        <EmptyState
+          icon="🌱"
+          title="No writing activity yet"
+          body="Once he spends time in the English Trainer, his minutes, streak and calendar will appear here."
+          cta="Open the English Trainer"
+          onAction={onStart}
+        />
+      ) : (<>
         <div className="card">
           <SecHead icon="⏱" title="Time on task" sub="How long and how often he’s writing" />
           <div className="stat-row" style={{ marginTop: 0 }}>
@@ -72,7 +106,7 @@ export default function EnglishProgress({ learner, onReset }) {
         </div>
 
         <div className="card">
-          <SecHead icon="📅" title="Practice calendar" sub="Darker days = more minutes" />
+          <SecHead icon="📅" title="Writing journey" sub="Darker days = more minutes" />
           <div className="cal-head">
             <button className="step-btn" onClick={() => stepMonth(-1)} aria-label="Previous month">◀</button>
             <div className="cal-title">{MONTHS[month]} {year}</div>
@@ -112,16 +146,34 @@ export default function EnglishProgress({ learner, onReset }) {
             );
           })}
         </div>
-      </>)}
+      </>))}
 
-      {view === 'writing' && (<>
+      {view === 'writing' && (t.paragraphs === 0 ? (
+        <EmptyState
+          icon="✍️"
+          title="No PEEL paragraphs yet"
+          body="Once he completes and checks a paragraph, his PEEL scores and progress will appear here."
+          cta="Start first PEEL challenge"
+          onAction={onStart}
+        />
+      ) : (<>
         <div className="card">
-          <SecHead icon="✍️" title="PEEL writing summary" sub="Across all Twelfth Night questions" />
+          <SecHead icon="⭐" title="PEEL Power" sub="How his paragraphs are scoring" />
           <div className="stat-row" style={{ marginTop: 0 }}>
             <div className="stat"><div className="v">{t.paragraphs}</div><div className="l">Paragraphs</div></div>
-            <div className="stat"><div className="v">{t.avg}<span style={{ fontSize: 14, color: 'var(--muted)' }}>/4</span></div><div className="l">Avg score</div></div>
+            <div className="stat"><div className="v">{t.avg}<span style={{ fontSize: 14, color: 'var(--eng-muted)' }}>/4</span></div><div className="l">Avg score</div></div>
             <div className="stat"><div className="v">{t.fullPeels}</div><div className="l">Full PEEL</div></div>
           </div>
+          <div className="report-total">
+            Each paragraph scores out of 4 — one mark each for a clear <strong>Point</strong>, a <strong>quote</strong>,
+            an <strong>explanation</strong> and a <strong>link</strong>. He’s reached the full 4/4 on
+            {' '}<strong>{t.fullPeels}</strong> paragraph{t.fullPeels === 1 ? '' : 's'}.
+          </div>
+        </div>
+
+        <div className="card next-step">
+          <SecHead icon="🎯" title="Next best step" sub="A simple way to help at home" />
+          <p className="next-step-text">{nextStep(t, extracts.length)}</p>
         </div>
 
         <div className="card">
@@ -146,7 +198,7 @@ export default function EnglishProgress({ learner, onReset }) {
             );
           })}
         </div>
-      </>)}
+      </>))}
 
       <div className="dash-footer">
         <button className="btn ghost small danger" onClick={() => setConfirmReset(true)}>⚠ Reset English progress</button>

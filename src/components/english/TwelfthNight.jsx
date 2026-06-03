@@ -2,34 +2,81 @@ import React from 'react';
 import characters from '../../data/twelfthNightCharacters.js';
 import themes from '../../data/twelfthNightThemes.js';
 
-// The main hub for the play: a short summary, themes, characters, and links to
-// every English activity.
+// The story told in a few short beats, so it reads like a play guide.
+const STORY = [
+  { icon: '🌊', text: 'Viola is shipwrecked in Illyria and disguises herself as a boy called Cesario.' },
+  { icon: '🎶', text: 'She works for Duke Orsino, who is in love with the countess Olivia.' },
+  { icon: '💘', text: 'Olivia falls for Cesario, while Viola secretly loves Orsino — a tangle of mistaken love.' },
+  { icon: '🃏', text: 'Meanwhile, the proud servant Malvolio is tricked by a forged letter for a laugh.' },
+  { icon: '🎉', text: 'Twins reunite, disguises drop, and the couples are happily matched in the end.' },
+];
+
+// A few famous lines for the hub.
+const QUOTES = [
+  { text: 'If music be the food of love, play on.', by: 'Orsino' },
+  { text: 'I am not what I am.', by: 'Viola' },
+  { text: 'Better a witty fool than a foolish wit.', by: 'Feste' },
+];
+
 export default function TwelfthNight({ onBack, onOpen }) {
   return (
     <div className="english-wrap fade-in">
       <button className="btn ghost small" onClick={onBack}>← English home</button>
 
       <div className="card eng-hero">
-        <span className="eng-badge">🎭 Twelfth Night</span>
-        <h1>Shakespeare’s Twelfth Night</h1>
-        <p>
-          After a shipwreck, Viola disguises herself as a boy called Cesario and works for Duke Orsino.
-          Orsino loves Olivia, Olivia falls for Cesario, and Viola secretly loves Orsino — a funny tangle
-          of love, disguise and mistaken identity, with pranks on the proud servant Malvolio along the way.
-        </p>
+        <span className="eng-badge">🎭 The play guide</span>
+        <h1 className="eng-title">Twelfth Night</h1>
+        <p className="eng-hero-sub">A comedy of love, disguise and mistaken identity by William Shakespeare.</p>
       </div>
 
-      <div className="card">
-        <div className="dc-label">Main themes</div>
-        <div className="trait-row">
-          {themes.map((t) => <span className="trait-chip" key={t.name}>{t.emoji} {t.name}</span>)}
+      <div className="card play-card">
+        <div className="eng-kicker">⏱ Story in 60 seconds</div>
+        <ol className="story-list">
+          {STORY.map((s, i) => (
+            <li className="story-beat" key={i}>
+              <span className="beat-ico">{s.icon}</span>
+              <span className="beat-text">{s.text}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+
+      <div className="eng-duo">
+        <div className="card play-card">
+          <div className="eng-kicker">👥 Main characters</div>
+          <div className="trait-row">
+            {characters.map((c) => (
+              <button className="trait-chip clickable" key={c.name} onClick={() => onOpen('characters')}>
+                {c.emoji} {c.name}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="dc-label" style={{ marginTop: 14 }}>Main characters</div>
-        <div className="trait-row">
-          {characters.map((c) => <span className="trait-chip" key={c.name}>{c.emoji} {c.name}</span>)}
+        <div className="card play-card">
+          <div className="eng-kicker">🔑 Big themes</div>
+          <div className="trait-row">
+            {themes.map((t) => (
+              <button className="trait-chip clickable" key={t.name} onClick={() => onOpen('symbolism')}>
+                {t.emoji} {t.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
+      <div className="card play-card">
+        <div className="eng-kicker">📜 Famous quotes</div>
+        <ul className="quote-list">
+          {QUOTES.map((q, i) => (
+            <li key={i} className="famous-quote">
+              <span className="fq-text">“{q.text}”</span>
+              <span className="fq-by">— {q.by}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <h2 className="eng-sec-title"><span className="eng-orn">✦</span>Start practising<span className="eng-orn">✦</span></h2>
       <div className="hub-actions">
         <button className="hub-btn" onClick={() => onOpen('peel')}><span>✍️</span>PEEL Practice</button>
         <button className="hub-btn" onClick={() => onOpen('characters')}><span>👥</span>Characters</button>
